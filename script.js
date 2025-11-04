@@ -5,6 +5,7 @@ let deck = [];
 let playerHands = [[]];
 let dealerHand = [];
 let activeHand = 0;
+let revealDealer = false;
 
 const bankrollEl = document.getElementById('bankroll-amount');
 const betEl = document.getElementById('bet-amount');
@@ -42,14 +43,41 @@ function renderCard(card) {
 }
 
 function renderHands() {
-  dealerCardsEl.textContent = dealerHand.map(renderCard).join('\n');
+  dealerCardsEl.innerHTML = '';
   playerHands.forEach((hand, i) => {
-    playerCardsEls[i].textContent = hand.map(renderCard).join('\n');
+    playerCardsEls[i].innerHTML = '';
+    hand.forEach(card => {
+      const cardEl = document.createElement('pre');
+      cardEl.className = 'card';
+      cardEl.textContent = renderCard(card);
+      playerCardsEls[i].appendChild(cardEl);
+    });
+  });
+
+  dealerHand.forEach((card, i) => {
+    const cardEl = document.createElement('pre');
+    cardEl.className = 'card';
+    cardEl.textContent = i === 1 && !revealDealer ? renderCard({ value: '?', suit: '?' }) : renderCard(card);
+    dealerCardsEl.appendChild(cardEl);
   });
 }
 
+function animateBankrollChange(from, to) {
+  const duration = 500;
+  const steps = Math.abs(to - from);
+  const stepTime = duration / steps;
+  let current = from;
+  const increment = to > from ? 1 : -1;
+
+  const interval = setInterval(() => {
+    current += increment;
+    bankrollEl.textContent = current;
+    if (current === to) clearInterval(interval);
+  }, stepTime);
+}
+
 function updateDisplay() {
-  bankrollEl.textContent = bankroll;
+  animateBankrollChange(parseInt(bankrollEl.textContent), bankroll);
   betEl.textContent = bet;
   renderHands();
 }
@@ -59,6 +87,7 @@ function resetHands() {
   dealerHand = [];
   activeHand = 0;
   insuranceBet = 0;
+  revealDealer = false;
   splitHandEl.style.display = 'none';
   messageEl.textContent = '';
   playerCardsEls.forEach(el => el.textContent = '');
@@ -82,7 +111,24 @@ function calculateScore(hand) {
   return score;
 }
 
+async function dealCards() {
+  playerHands[0].push(drawCard());
+  renderHands();
+  await new Promise(r => setTimeout(r, 500));
+  dealerHand.push(drawCard());
+  renderHands();
+  await new Promise(r => setTimeout(r, 500));
+  playerHands[0].push(drawCard());
+  renderHands();
+  await new Promise(r => setTimeout(r, 500));
+  dealerHand.push(drawCard());
+  renderHands();
+}
+
 function endRound() {
+  revealDealer = true;
+  renderHands();
+
   while (calculateScore(dealerHand) < 17) {
     dealerHand.push(drawCard());
   }
@@ -128,14 +174,11 @@ document.querySelectorAll('.chip').forEach(chip => {
   });
 });
 
-document.getElementById('bet-btn').addEventListener('click', () => {
+document.getElementById('bet-btn').addEventListener('click', async () => {
   if (bet === 0) return;
   resetHands();
   createDeck();
-  playerHands[0].push(drawCard(), drawCard());
-  dealerHand.push(drawCard(), drawCard());
-  updateDisplay();
-
+  await dealCards();
   if (dealerHand[0].value === 'A') {
     messageEl.textContent = 'Dealer shows Ace. Insurance available.';
   }

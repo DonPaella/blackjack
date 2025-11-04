@@ -5,6 +5,8 @@ body {
   text-align: center;
   margin: 0;
   padding: 20px;
+  position: relative;
+  overflow-x: hidden;
 }
 
 #game {
@@ -14,15 +16,20 @@ body {
 
 .hand {
   margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-pre {
+pre.card {
   background: #022c22;
   padding: 10px;
   border-radius: 5px;
   display: inline-block;
   opacity: 0;
   animation: fadeIn 0.5s forwards;
+  transition: transform 0.3s ease;
 }
 
 @keyframes fadeIn {
@@ -34,13 +41,15 @@ pre {
 }
 
 .chip {
-  padding: 10px 20px;
-  margin: 0 5px;
-  border: none;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  cursor: pointer;
+  border: none;
   font-weight: bold;
-  transition: transform 0.3s ease;
+  font-size: 16px;
+  margin: 0 10px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
 .chip.red { background: #dc2626; color: white; }
@@ -48,6 +57,40 @@ pre {
 .chip.green { background: #16a34a; color: white; }
 
 .chip:hover { transform: scale(1.1); }
+
+#bet-btn {
+  padding: 15px 30px;
+  font-size: 20px;
+  background: gold;
+  color: black;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 10px;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease;
+}
+
+#bet-btn::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 15px;
+  background: linear-gradient(45deg, #facc15, #f472b6, #3b82f6);
+  z-index: -1;
+  filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#bet-btn:hover::before,
+#bet-btn:active::before {
+  opacity: 1;
+}
 
 #controls button {
   margin: 5px;
@@ -65,4 +108,14 @@ pre {
 
 #controls button:active {
   background: #1e3a8a;
+}
+
+#dealer-hand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#dealer-cards {
+  margin-top: 10px;
 }
