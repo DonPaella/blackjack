@@ -5,12 +5,12 @@ let insuranceBet = 0;
 let deck = [];
 let dealerHand = [];
 let playerHands = [[]];
+let handBets = [0]; // track bet per hand
 let currentHandIndex = 0;
 let gameInProgress = false;
 let revealDealer = false;
 
 // -------------------- DOM ELEMENTS --------------------
-const gameScreen = document.getElementById('game');
 const bankrollEl = document.getElementById('bankroll-amount');
 const betEl = document.getElementById('bet-amount');
 const dealerCardsEl = document.getElementById('dealer-cards');
@@ -133,6 +133,7 @@ function startRound() {
   revealDealer = false;
   dealerHand = [];
   playerHands = [[]];
+  handBets = [bet];
   currentHandIndex = 0;
   messageEl.textContent = '';
 
@@ -143,7 +144,6 @@ function startRound() {
   dealerHand.push(drawCard(), drawCard());
 
   renderHands();
-  updateControls();   // <-- ensures buttons show correctly
   updateControls();
   playSound('deal-sound');
 }
@@ -160,42 +160,63 @@ async function endRound() {
   }
 
   playerHands.forEach((hand, i) => {
+    const wager = handBets[i];
     const score = calculateScore(hand);
     const dealerScore = calculateScore(dealerHand);
     const playerBJ = isBlackjack(hand);
     const dealerBJ = isBlackjack(dealerHand);
 
-    if (playerBJ && dealerBJ){
-      bankroll += bet / playerHands.length;
+    if (playerBJ && dealerBJ) {
+      bankroll += wager;
+      showOverlay('push-overlay');
     } else if (dealerBJ) {
       playSound('lose-sound');
+      showOverlay('lose-overlay');
     } else if (playerBJ) {
-      bankroll += bet / playerHands.length * 2.5;
+      bankroll += wager * 2.5;
       playSound('win-sound');
-      showBlackjackOverlay(); // special overlay
+      showOverlay('blackjack-overlay');
     } else if (score > 21) {
       playSound('lose-sound');
+      showOverlay('lose-overlay');
     } else if (dealerScore > 21 || score > dealerScore) {
-      bankroll += bet / playerHands.length * 2;
+      bankroll += wager * 2;
       playSound('win-sound');
+      showOverlay('win-overlay');
     } else if (score === dealerScore) {
-      bankroll += bet / playerHands.length;
+      bankroll += wager;
+      showOverlay('push-overlay');
     } else {
       playSound('lose-sound');
+      showOverlay('lose-overlay');
     }
   });
 
   bet = 0;
   insuranceBet = 0;
+  handBets = [0];
   gameInProgress = false;
-  updateDisplay();
+  animateNumber(bankrollEl, bankroll);
+  animateNumber(betEl, bet);
+  updateControls();
 }
 
-// -------------------- OVERLAY --------------------
-function showBlackjackOverlay() {
-  const overlay = document.getElementById('blackjack-overlay');
+// -------------------- HAND FLOW --------------------
+function nextHandOrEnd() {
+  if (currentHandIndex < playerHands.length - 1) {
+    currentHandIndex++;
+    renderHands();
+    updateControls();
+  } else {
+    endRound();
+  }
+}
+
+// -------------------- OVERLAYS --------------------
+function showOverlay(id) {
+  const overlay = document.getElementById(id);
   overlay.classList.add('active');
-  setTimeout(() => overlay.classList.remove('active'), 2000);
+  setTimeout(() => overlay.classList.remove('active'), 1500);
 }
 
 // -------------------- CONTROLS --------------------
@@ -204,21 +225,22 @@ hitBtn.addEventListener('click', () => {
   renderHands();
   playSound('deal-sound');
   if (calculateScore(playerHands[currentHandIndex]) > 21) {
-    endRound();
+    nextHandOrEnd();
   }
 });
 
 standBtn.addEventListener('click', () => {
-  endRound();
+  nextHandOrEnd();
 });
 
 doubleBtn.addEventListener('click', () => {
-  if (bankroll >= bet) {
-    bankroll -= bet;
-    bet *= 2;
+  if (bankroll >= handBets[currentHandIndex]) {
+    bankroll -= handBets[currentHandIndex];
+    handBets[currentHandIndex] *= 2;
     playerHands[currentHandIndex].push(drawCard());
     renderHands();
-    endRound();
+    animateNumber(bankrollEl, bankroll);
+    nextHandOrEnd();
   }
 });
 
@@ -226,32 +248,35 @@ splitBtn.addEventListener('click', () => {
   const hand = playerHands[0];
   if (hand.length === 2 && hand[0].value === hand[1].value && bankroll >= bet) {
     bankroll -= bet;
+    handBets = [bet, bet];
     playerHands = [[hand[0]], [hand[1]]];
     playerHands[0].push(drawCard());
     playerHands[1].push(drawCard());
     renderHands();
-  }
-});
-
-insuranceBtn.addEventListener('click', () => {
-  if (dealerHand[0].value === 'A' && bankroll >= bet/2) {
-    insuranceBet = bet/2;
-    bankroll -= insuranceBet;
-    messageEl.textContent = 'Insurance taken.\n';
+    updateControls();
     animateNumber(bankrollEl, bankroll);
   }
 });
 
+insuranceBtn.addEventListener('click', () => {
+  if (dealerHand[0]?.value === 'A' && insuranceBet === 0 && bankroll >= bet/2) {
+        insuranceBet = bet/2;
+    bankroll -= insuranceBet;
+    animateNumber(bankrollEl, bankroll);
+    updateControls();
+  }
+});
 
 // -------------------- CHIPS --------------------
 chipButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     const value = parseInt(btn.dataset.value);
     if (bankroll >= value && !gameInProgress) {
-      // Animate tokens first, then update bankroll/bet
+      // Animate tokens first, then update bankroll/bet numbers
       animateTokens(value, btn, betEl, () => {
         bankroll -= value;
         bet += value;
+        handBets = [bet]; // reset handBets to match current bet
         animateNumber(bankrollEl, bankroll);
         animateNumber(betEl, bet);
         updateControls();
@@ -278,30 +303,36 @@ function animateTokens(chipValue, chipElement, targetElement, callback) {
     token.textContent = '$1';
     document.body.appendChild(token);
 
+    token.style.position = 'fixed';
     token.style.left = chipRect.left + 'px';
     token.style.top = chipRect.top + 'px';
+    token.style.zIndex = 9999;
 
     const offsetX = (Math.random() - 0.5) * 200;
     const offsetY = (Math.random() - 0.5) * 200;
 
-    token.animate([
-      { transform: `translate(0,0)` },
-      { transform: `translate(${offsetX}px, ${offsetY}px)` }
-    ], { duration: 200, fill: 'forwards' });
+    token.animate(
+      [{ transform: `translate(0,0)` }, { transform: `translate(${offsetX}px, ${offsetY}px)` }],
+      { duration: 200, fill: 'forwards' }
+    );
 
     setTimeout(() => {
       const dx = targetRect.left - chipRect.left;
       const dy = targetRect.top - chipRect.top;
 
-      token.animate([
-        { transform: `translate(${offsetX}px, ${offsetY}px)` },
-        { transform: `translate(${dx}px, ${dy}px)` }
-      ], { duration: 700, easing: 'ease-in-out', fill: 'forwards' })
-      .onfinish = () => {
-        token.remove();
-        finished++;
-        if (finished === chipValue && callback) callback();
-      };
+      token
+        .animate(
+          [
+            { transform: `translate(${offsetX}px, ${offsetY}px)` },
+            { transform: `translate(${dx}px, ${dy}px)` }
+          ],
+          { duration: 700, easing: 'ease-in-out', fill: 'forwards' }
+        )
+        .onfinish = () => {
+          token.remove();
+          finished++;
+          if (finished === chipValue && callback) callback();
+        };
     }, 200);
   }
 }
@@ -314,35 +345,41 @@ function updateDisplay() {
 }
 
 function updateControls() {
-  if (!gameInProgress) {
-    hitBtn.disabled = true;
-    standBtn.disabled = true;
-    doubleBtn.classList.add('hidden');
-    splitBtn.classList.add('hidden');
-    insuranceBtn.classList.add('hidden');
-    return;
-  }
+  const inPlay = gameInProgress;
+  hitBtn.disabled = !inPlay;
+  standBtn.disabled = !inPlay;
 
-  hitBtn.disabled = false;
-  standBtn.disabled = false;
-
-  // Double available only on first two cards
-  if (playerHands[currentHandIndex].length === 2 && bankroll >= bet) {
+  // Double available only on first two cards, sufficient bankroll
+  if (
+    inPlay &&
+    playerHands[currentHandIndex]?.length === 2 &&
+    bankroll >= handBets[currentHandIndex]
+  ) {
     doubleBtn.classList.remove('hidden');
   } else {
     doubleBtn.classList.add('hidden');
   }
 
-  // Split available only if two cards of same value
-  const hand = playerHands[currentHandIndex];
-  if (hand.length === 2 && hand[0].value === hand[1].value && bankroll >= bet) {
+  // Split available: exactly two cards of same value, sufficient bankroll
+  const hand = playerHands[currentHandIndex] || [];
+  if (
+    inPlay &&
+    hand.length === 2 &&
+    hand[0]?.value === hand[1]?.value &&
+    bankroll >= handBets[currentHandIndex]
+  ) {
     splitBtn.classList.remove('hidden');
   } else {
     splitBtn.classList.add('hidden');
   }
 
-  // Insurance available if dealer shows Ace
-  if (dealerHand[0].value === 'A' && insuranceBet === 0 && bankroll >= bet/2) {
+  // Insurance available only if dealer up-card is Ace and you can afford it
+  if (
+    inPlay &&
+    dealerHand[0]?.value === 'A' &&
+    insuranceBet === 0 &&
+    bankroll >= bet / 2
+  ) {
     insuranceBtn.classList.remove('hidden');
   } else {
     insuranceBtn.classList.add('hidden');
@@ -353,8 +390,9 @@ function updateControls() {
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
 function animateNumber(element, newValue) {
-  const start = parseInt(element.textContent);
+  const start = parseInt(element.textContent || '0', 10);
   const end = newValue;
   const duration = 500; // ms
   const startTime = performance.now();
@@ -367,3 +405,6 @@ function animateNumber(element, newValue) {
   }
   requestAnimationFrame(step);
 }
+
+// Initialize display on load
+updateDisplay();

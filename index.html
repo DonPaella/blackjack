@@ -43,9 +43,9 @@
         <button id="stand-btn">Stand</button>
       </div>
       <div class="row">
-        <button id="double-btn">Double Down</button>
-        <button id="split-btn">Split</button>
-        <button id="insurance-btn">Insurance</button>
+        <button id="double-btn" class="hidden">Double Down</button>
+        <button id="split-btn" class="hidden">Split</button>
+        <button id="insurance-btn" class="hidden">Insurance</button>
       </div>
     </div>
 
@@ -61,8 +61,11 @@
     <div id="message"></div>
   </div>
 
-  <!-- SPECIAL OVERLAY FOR BLACKJACK -->
+  <!-- SPECIAL OVERLAYS -->
   <div id="blackjack-overlay" class="overlay blackjack">BLACKJACK!</div>
+  <div id="win-overlay" class="overlay win">YOU WON!</div>
+  <div id="lose-overlay" class="overlay lose">YOU LOSE!</div>
+  <div id="push-overlay" class="overlay push">PUSH</div>
 
   <!-- AUDIO (SFX) -->
   <audio id="deal-sound" src="sounds/deal.mp3" preload="auto"></audio>
