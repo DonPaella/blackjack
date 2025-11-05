@@ -176,9 +176,6 @@ async function endRound() {
       bankroll += bet / playerHands.length * 2.5;
       playSound('win-sound');
       showBlackjackOverlay(); // special overlay
-    } else if (score > 21) {
-      messageEl.textContent += `Hand ${i+1}: Bust.\n`;
-      playSound('lose-sound');
     } else if (dealerScore > 21 || score > dealerScore) {
       messageEl.textContent += `Hand ${i+1}: Win!\n`;
       bankroll += bet / playerHands.length * 2;
