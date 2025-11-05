@@ -165,26 +165,22 @@ async function endRound() {
     const playerBJ = isBlackjack(hand);
     const dealerBJ = isBlackjack(dealerHand);
 
-    if (playerBJ && dealerBJ) {
-      messageEl.textContent += `Hand ${i+1}: Push (both Blackjack).\n`;
+    if (playerBJ && dealerBJ){
       bankroll += bet / playerHands.length;
     } else if (dealerBJ) {
-      messageEl.textContent += `Hand ${i+1}: Dealer Blackjack.\n`;
       playSound('lose-sound');
     } else if (playerBJ) {
-      messageEl.textContent += `Hand ${i+1}: Blackjack! You win.\n`;
       bankroll += bet / playerHands.length * 2.5;
       playSound('win-sound');
       showBlackjackOverlay(); // special overlay
+    } else if (score > 21) {
+      playSound('lose-sound');
     } else if (dealerScore > 21 || score > dealerScore) {
-      messageEl.textContent += `Hand ${i+1}: Win!\n`;
       bankroll += bet / playerHands.length * 2;
       playSound('win-sound');
     } else if (score === dealerScore) {
-      messageEl.textContent += `Hand ${i+1}: Push.\n`;
       bankroll += bet / playerHands.length;
     } else {
-      messageEl.textContent += `Hand ${i+1}: Lose.\n`;
       playSound('lose-sound');
     }
   });
@@ -242,8 +238,10 @@ insuranceBtn.addEventListener('click', () => {
     insuranceBet = bet/2;
     bankroll -= insuranceBet;
     messageEl.textContent = 'Insurance taken.\n';
+    animateNumber(bankrollEl, bankroll);
   }
 });
+
 
 // -------------------- CHIPS --------------------
 chipButtons.forEach(btn => {
