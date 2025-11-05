@@ -143,6 +143,7 @@ function startRound() {
   dealerHand.push(drawCard(), drawCard());
 
   renderHands();
+  updateControls();   // <-- ensures buttons show correctly
   updateControls();
   playSound('deal-sound');
 }
@@ -252,11 +253,14 @@ chipButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     const value = parseInt(btn.dataset.value);
     if (bankroll >= value && !gameInProgress) {
-      bankroll -= value;
-      bet += value;
-      // Animate tokens moving from chip to bet
-      animateTokens(value, btn, betEl);
-      updateDisplay();
+      // Animate tokens first, then update bankroll/bet
+      animateTokens(value, btn, betEl, () => {
+        bankroll -= value;
+        bet += value;
+        animateNumber(bankrollEl, bankroll);
+        animateNumber(betEl, bet);
+        updateControls();
+      });
     }
   });
 });
@@ -268,9 +272,10 @@ betBtn.addEventListener('click', () => {
 });
 
 // -------------------- TOKEN ANIMATION --------------------
-function animateTokens(chipValue, chipElement, targetElement) {
+function animateTokens(chipValue, chipElement, targetElement, callback) {
   const chipRect = chipElement.getBoundingClientRect();
   const targetRect = targetElement.getBoundingClientRect();
+  let finished = 0;
 
   for (let i = 0; i < chipValue; i++) {
     const token = document.createElement('div');
@@ -278,21 +283,17 @@ function animateTokens(chipValue, chipElement, targetElement) {
     token.textContent = '$1';
     document.body.appendChild(token);
 
-    // Start at chip position
     token.style.left = chipRect.left + 'px';
     token.style.top = chipRect.top + 'px';
 
-    // Scatter offset (10x bigger spread)
     const offsetX = (Math.random() - 0.5) * 200;
     const offsetY = (Math.random() - 0.5) * 200;
 
-    // Animate scatter
     token.animate([
       { transform: `translate(0,0)` },
       { transform: `translate(${offsetX}px, ${offsetY}px)` }
     ], { duration: 200, fill: 'forwards' });
 
-    // Then animate toward target
     setTimeout(() => {
       const dx = targetRect.left - chipRect.left;
       const dy = targetRect.top - chipRect.top;
@@ -301,7 +302,11 @@ function animateTokens(chipValue, chipElement, targetElement) {
         { transform: `translate(${offsetX}px, ${offsetY}px)` },
         { transform: `translate(${dx}px, ${dy}px)` }
       ], { duration: 700, easing: 'ease-in-out', fill: 'forwards' })
-      .onfinish = () => token.remove();
+      .onfinish = () => {
+        token.remove();
+        finished++;
+        if (finished === chipValue && callback) callback();
+      };
     }, 200);
   }
 }
@@ -352,4 +357,18 @@ function updateControls() {
 // -------------------- UTIL --------------------
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+function animateNumber(element, newValue) {
+  const start = parseInt(element.textContent);
+  const end = newValue;
+  const duration = 500; // ms
+  const startTime = performance.now();
+
+  function step(currentTime) {
+    const progress = Math.min((currentTime - startTime) / duration, 1);
+    const value = Math.floor(start + (end - start) * progress);
+    element.textContent = value;
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }

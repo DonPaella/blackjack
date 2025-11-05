@@ -44,7 +44,7 @@ body {
 
 /* ---------- GAME LAYOUT ---------- */
 #game {
-  display: none;
+  display: block;
   padding: 1rem;
 }
 
