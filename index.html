@@ -9,25 +9,31 @@
 <body>
   <div id="game">
     <h1>ASCII Blackjack</h1>
+
+    <!-- Bankroll display -->
     <div id="bankroll">Bankroll: $<span id="bankroll-amount">300</span></div>
 
+    <!-- Chip betting area -->
     <div id="chip-area">
       <button class="chip red" data-value="5">$5</button>
       <button class="chip blue" data-value="25">$25</button>
       <button class="chip green" data-value="100">$100</button>
     </div>
 
+    <!-- Current bet -->
     <div id="bet-display">Current Bet: $<span id="bet-amount">0</span></div>
     <button id="bet-btn">Place Bet</button>
 
+    <!-- Dealer hand -->
     <div id="dealer-hand" class="hand">
       <h2>Dealer</h2>
-      <pre id="dealer-cards"></pre>
+      <div id="dealer-cards"></div>
     </div>
 
+    <!-- Player hands -->
     <div id="player-hands-container">
       <div class="hand">
-        <h2>Player Hand 1</h2>
+        <h2>Player</h2>
         <div id="player-cards-0"></div>
       </div>
       <div class="hand" id="split-hand" style="display:none;">
@@ -36,6 +42,7 @@
       </div>
     </div>
 
+    <!-- Controls -->
     <div id="controls">
       <button id="hit-btn">Hit</button>
       <button id="stand-btn">Stand</button>
@@ -44,8 +51,11 @@
       <button id="insurance-btn">Insurance</button>
     </div>
 
+    <!-- Message area -->
     <div id="message"></div>
   </div>
+
+  <!-- Game logic -->
   <script src="script.js"></script>
 </body>
 </html>
