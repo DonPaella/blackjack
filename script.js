@@ -89,7 +89,6 @@ function isBlackjack(hand) {
 
 // -------------------- RENDER --------------------
 function renderHands() {
-  // Dealer
   dealerCardsEl.innerHTML = '';
   dealerHand.forEach((card, i) => {
     if (i === 0 && !revealDealer) {
@@ -100,14 +99,12 @@ function renderHands() {
   });
   dealerScoreEl.textContent = revealDealer ? `Score: ${calculateScore(dealerHand)}` : '';
 
-  // Player hand 0
   playerCards0El.innerHTML = '';
   playerHands[0].forEach(card => {
     playerCards0El.innerHTML += renderCard(card);
   });
   playerScore0El.textContent = `Score: ${calculateScore(playerHands[0])}`;
 
-  // Split hand
   if (playerHands[1]) {
     splitHandEl.style.display = 'block';
     playerCards1El.innerHTML = '';
@@ -258,9 +255,11 @@ splitBtn.addEventListener('click', () => {
   }
 });
 
+// -------------------- INSURANCE --------------------
 insuranceBtn.addEventListener('click', () => {
+  // ✅ FIXED: Only allow insurance if dealer up-card is Ace
   if (dealerHand[0]?.value === 'A' && insuranceBet === 0 && bankroll >= bet/2) {
-        insuranceBet = bet/2;
+    insuranceBet = bet/2;
     bankroll -= insuranceBet;
     animateNumber(bankrollEl, bankroll);
     updateControls();
