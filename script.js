@@ -258,7 +258,7 @@ splitBtn.addEventListener('click', () => {
 // -------------------- INSURANCE --------------------
 insuranceBtn.addEventListener('click', () => {
   // ✅ FIXED: Only allow insurance if dealer up-card is Ace
-  if (dealerHand[0]?.value === 'A' && insuranceBet === 0 && bankroll >= bet/2) {
+  if (dealerHand[1]?.value === 'A' && insuranceBet === 0 && bankroll >= bet/2) {
     insuranceBet = bet/2;
     bankroll -= insuranceBet;
     animateNumber(bankrollEl, bankroll);
@@ -375,7 +375,7 @@ function updateControls() {
   // Insurance available only if dealer up-card is Ace and you can afford it
   if (
     inPlay &&
-    dealerHand[0]?.value === 'A' &&
+    dealerHand[1]?.value === 'A' &&
     insuranceBet === 0 &&
     bankroll >= bet / 2
   ) {
