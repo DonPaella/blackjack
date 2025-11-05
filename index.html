@@ -8,13 +8,6 @@
 </head>
 <body>
 
-  <!-- HOMESCREEN -->
-  <div id="home-screen">
-    <h1>Blackjack</h1>
-    <button id="new-game-btn">New Game</button>
-    <button id="load-game-btn">Load Game</button>
-  </div>
-
   <!-- GAME SCREEN -->
   <div id="game">
 
@@ -26,6 +19,7 @@
     <div id="dealer-hand" class="hand">
       <h2>Dealer</h2>
       <div id="dealer-cards"></div>
+      <div id="dealer-score" class="score"></div>
     </div>
 
     <!-- Player Hands -->
@@ -33,10 +27,12 @@
       <div class="hand">
         <h2>Player</h2>
         <div id="player-cards-0"></div>
+        <div id="player-score-0" class="score"></div>
       </div>
       <div class="hand" id="split-hand" style="display:none;">
         <h2>Player Hand 2</h2>
         <div id="player-cards-1"></div>
+        <div id="player-score-1" class="score"></div>
       </div>
     </div>
 
