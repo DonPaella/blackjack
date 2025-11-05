@@ -1,226 +1,206 @@
-/* Felt background */
+/* Import a nicer font */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap');
+
 body {
-  background: radial-gradient(circle at center, #065f46 0%, #064e3b 100%);
-  color: white;
-  font-family: monospace;
-  text-align: center;
   margin: 0;
-  padding: 20px;
-  position: relative;
+  font-family: 'Montserrat', sans-serif;
+  background: radial-gradient(circle at center, #064420, #032d14);
+  color: #fff;
   overflow-x: hidden;
 }
 
-/* Game container */
-#game {
-  max-width: 800px;
-  margin: auto;
-}
-
-/* Hand layout */
-.hand {
-  margin: 20px 0;
+/* ---------- HOMESCREEN ---------- */
+#home-screen {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
+  height: 100vh;
+  text-align: center;
 }
 
-/* Card appearance */
-pre.card {
-  background: #022c22;
-  padding: 10px;
-  border-radius: 5px;
-  display: inline-block;
-  opacity: 0;
-  animation: fadeIn 0.5s forwards;
-  transition: transform 0.3s ease;
-  color: white;
+#home-screen h1 {
+  font-size: 3rem;
+  margin-bottom: 2rem;
 }
 
-.card.red {
-  color: #f87171;
+#home-screen button {
+  font-size: 1.5rem;
+  padding: 1rem 2rem;
+  margin: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #ffcc00;
+  color: #000;
+  font-weight: bold;
+  transition: transform 0.2s;
 }
 
-@keyframes fadeIn {
-  to { opacity: 1; }
+#home-screen button:hover {
+  transform: scale(1.05);
 }
 
-/* Chip buttons */
+/* ---------- GAME LAYOUT ---------- */
+#game {
+  display: none; /* hidden until New Game or Load */
+  padding: 1rem;
+}
+
+#bankroll {
+  position: absolute;
+  top: 10px;
+  left: 20px;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+#bet-display {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+#dealer-hand {
+  position: absolute;
+  top: 100px;
+  right: 5%;
+}
+
+#player-hands-container {
+  position: absolute;
+  bottom: 100px;
+  left: 5%;
+}
+
+/* ---------- CHIP BUTTONS ---------- */
+#chip-area {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .chip {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  border: none;
-  font-weight: bold;
-  font-size: 16px;
+  border: 4px solid black;
   margin: 0 10px;
+  font-size: 1rem;
+  font-weight: bold;
   cursor: pointer;
-  position: relative;
-  z-index: 1;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s;
 }
 
-.chip.red { background: #dc2626; color: white; }
-.chip.blue { background: #2563eb; color: white; }
-.chip.green { background: #16a34a; color: white; }
+.chip.red { background: #e74c3c; color: #fff; }
+.chip.blue { background: #3498db; color: #fff; }
+.chip.green { background: #2ecc71; color: #fff; }
 
-.chip:hover { transform: scale(1.1); }
+.chip:hover {
+  transform: scale(1.1);
+}
 
-.chip::before {
-  content: "";
+/* ---------- CONTROL BUTTONS ---------- */
+#controls {
   position: absolute;
-  top: -5px;
-  left: -5px;
-  right: -5px;
-  bottom: -5px;
-  border-radius: 50%;
-  background: linear-gradient(45deg, #f87171, #60a5fa, #34d399);
-  z-index: -1;
-  filter: blur(8px);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  bottom: 150px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
 }
 
-.chip:hover::before,
-.chip:active::before {
-  opacity: 1;
+#controls .row {
+  margin: 10px 0;
 }
 
-/* Bet button */
-#bet-btn {
-  padding: 15px 30px;
-  font-size: 20px;
-  background: gold;
-  color: black;
+#hit-btn, #stand-btn {
+  font-size: 1.5rem;
+  padding: 1rem 2rem;
+  margin: 0 20px;
+  background: #ffcc00;
+  color: #000;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
-  margin-top: 10px;
-  position: relative;
-  z-index: 1;
-  transition: transform 0.2s ease;
+  font-weight: bold;
 }
 
-#bet-btn::before {
-  content: "";
-  position: absolute;
-  top: -5px;
-  left: -5px;
-  right: -5px;
-  bottom: -5px;
-  border-radius: 15px;
-  background: linear-gradient(45deg, #facc15, #f472b6, #3b82f6);
-  z-index: -1;
-  filter: blur(8px);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-#bet-btn:hover::before,
-#bet-btn:active::before {
-  opacity: 1;
-}
-
-/* Control buttons */
-#controls button {
-  margin: 5px;
-  padding: 10px 15px;
-  background: #1e3a8a;
-  color: white;
+#double-btn, #split-btn, #insurance-btn {
+  font-size: 1rem;
+  padding: 0.7rem 1.5rem;
+  margin: 0 10px;
+  background: #555;
+  color: #fff;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
-  position: relative;
-  z-index: 1;
-  transition: transform 0.2s ease;
 }
 
 #controls button:hover {
-  background: #1e40af;
-  transform: scale(1.05);
+  opacity: 0.9;
 }
 
-#controls button:active {
-  background: #1e3a8a;
+/* Hide buttons when not available */
+.hidden {
+  display: none !important;
 }
 
-#controls button::before {
-  content: "";
+/* ---------- CARDS ---------- */
+.card {
+  display: inline-block;
+  margin: 5px;
+  font-family: monospace;
+  font-size: 14px;
+  white-space: pre;
+  background: #fff;
+  color: #000;
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.card.red {
+  color: red;
+}
+
+/* ---------- TOKENS ---------- */
+.token {
   position: absolute;
-  top: -4px;
-  left: -4px;
-  right: -4px;
-  bottom: -4px;
-  border-radius: 8px;
-  background: linear-gradient(45deg, #60a5fa, #f472b6, #facc15);
-  z-index: -1;
-  filter: blur(6px);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: gold;
+  border: 2px solid black;
+  font-size: 12px;
+  text-align: center;
+  line-height: 24px;
+  pointer-events: none;
+  z-index: 1000;
 }
 
-#controls button:hover::before,
-#controls button:active::before {
-  opacity: 1;
-}
-
-/* Dealer hand layout */
-#dealer-hand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-#dealer-cards {
-  margin-top: 10px;
-}
-
-/* Player hand layout */
-#player-hands-container .hand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Message box */
-#message {
-  white-space: pre-line;
-  margin-top: 20px;
-}
-
-/* Fullscreen WIN/LOSE overlays */
+/* ---------- OVERLAYS ---------- */
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(6, 78, 59, 0.95);
+  font-size: 4rem;
+  font-weight: bold;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 5rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  z-index: 1000;
-  opacity: 0;
-  pointer-events: none;
-  animation: fadeOverlay 1s forwards;
+  z-index: 2000;
+  animation: fadeOut 2s forwards;
 }
 
-.overlay.win {
-  color: #22c55e;
-  text-shadow: 0 0 20px #22c55e, 0 0 40px #22c55e, 0 0 60px #22c55e;
-}
+.overlay.win { color: #2ecc71; }
+.overlay.lose { color: #e74c3c; }
 
-.overlay.lose {
-  color: #ef4444;
-  text-shadow: 0 0 20px #ef4444, 0 0 40px #ef4444, 0 0 60px #ef4444;
-}
-
-@keyframes fadeOverlay {
-  0% { opacity: 0; }
-  20% { opacity: 1; }
+@keyframes fadeOut {
+  0% { opacity: 1; }
   80% { opacity: 1; }
   100% { opacity: 0; }
 }

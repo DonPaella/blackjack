@@ -1,172 +1,178 @@
+// -------------------- GLOBAL STATE --------------------
 let bankroll = 300;
 let bet = 0;
 let insuranceBet = 0;
 let deck = [];
-let playerHands = [[]];
 let dealerHand = [];
-let activeHand = 0;
+let playerHands = [[]];
+let currentHandIndex = 0;
+let gameInProgress = false;
 let revealDealer = false;
-let gameInProgress = false; // NEW FLAG
 
+// -------------------- DOM ELEMENTS --------------------
+const homeScreen = document.getElementById('home-screen');
+const gameScreen = document.getElementById('game');
 const bankrollEl = document.getElementById('bankroll-amount');
 const betEl = document.getElementById('bet-amount');
 const dealerCardsEl = document.getElementById('dealer-cards');
-const playerCardsEls = [
-  document.getElementById('player-cards-0'),
-  document.getElementById('player-cards-1')
-];
-const messageEl = document.getElementById('message');
+const playerCards0El = document.getElementById('player-cards-0');
+const playerCards1El = document.getElementById('player-cards-1');
 const splitHandEl = document.getElementById('split-hand');
+const messageEl = document.getElementById('message');
 
+const hitBtn = document.getElementById('hit-btn');
+const standBtn = document.getElementById('stand-btn');
+const doubleBtn = document.getElementById('double-btn');
+const splitBtn = document.getElementById('split-btn');
+const insuranceBtn = document.getElementById('insurance-btn');
+
+const chipButtons = document.querySelectorAll('.chip');
+const betBtn = document.getElementById('bet-btn');
+
+// -------------------- AUDIO --------------------
+function playSound(id) {
+  const sound = document.getElementById(id);
+  if (sound) {
+    sound.currentTime = 0;
+    sound.play();
+  }
+}
+
+// -------------------- HOMESCREEN --------------------
+document.getElementById('new-game-btn').addEventListener('click', () => {
+  bankroll = 300;
+  saveGame();
+  startGame();
+});
+
+document.getElementById('load-game-btn').addEventListener('click', () => {
+  const saved = localStorage.getItem('blackjack-bankroll');
+  bankroll = saved ? parseInt(saved) : 300;
+  startGame();
+});
+
+function startGame() {
+  homeScreen.style.display = 'none';
+  gameScreen.style.display = 'block';
+  updateDisplay();
+}
+
+// -------------------- SAVE/LOAD --------------------
+function saveGame() {
+  localStorage.setItem('blackjack-bankroll', bankroll);
+}
+
+// -------------------- DECK --------------------
 function createDeck() {
-  const suits = ['♠', '♥', '♦', '♣'];
-  const values = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+  const suits = ['♠','♥','♦','♣'];
+  const values = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
   deck = [];
-  for (let suit of suits) {
-    for (let value of values) {
-      deck.push({ value, suit });
+  for (let s of suits) {
+    for (let v of values) {
+      deck.push({value: v, suit: s});
     }
   }
-  deck = deck.sort(() => Math.random() - 0.5);
+}
+
+function shuffleDeck() {
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i+1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
 }
 
 function drawCard() {
+  if (deck.length === 0) {
+    createDeck();
+    shuffleDeck();
+  }
   return deck.pop();
 }
 
-function renderCard(card) {
-  return `
-┌─────┐
-│${card.value.padEnd(2)}   │
-│  ${card.suit}  │
-│   ${card.value.padStart(2)}│
-└─────┘`;
-}
-
-function renderHands() {
-  dealerCardsEl.innerHTML = '';
-  playerHands.forEach((hand, i) => {
-    playerCardsEls[i].innerHTML = '';
-    hand.forEach(card => {
-      const cardEl = document.createElement('pre');
-      cardEl.className = 'card';
-      if (['♥', '♦'].includes(card.suit)) {
-        cardEl.classList.add('red');
-      }
-      cardEl.textContent = renderCard(card);
-      playerCardsEls[i].appendChild(cardEl);
-    });
-  });
-
-  dealerHand.forEach((card, i) => {
-    const cardEl = document.createElement('pre');
-    cardEl.className = 'card';
-    if (i !== 1 || revealDealer) {
-      if (['♥', '♦'].includes(card.suit)) {
-        cardEl.classList.add('red');
-      }
-    }
-    cardEl.textContent = i === 1 && !revealDealer ? renderCard({ value: '?', suit: '?' }) : renderCard(card);
-    dealerCardsEl.appendChild(cardEl);
-  });
-}
-
-function animateBankrollChange(from, to) {
-  if (from === to) return;
-  const duration = 500;
-  const steps = Math.min(Math.abs(to - from), 50);
-  const stepTime = duration / steps;
-  let current = from;
-  const increment = to > from ? 1 : -1;
-
-  const interval = setInterval(() => {
-    current += increment;
-    bankrollEl.textContent = current;
-    if ((increment === -1 && current <= to) || (increment === 1 && current >= to)) {
-      bankrollEl.textContent = to;
-      clearInterval(interval);
-    }
-  }, stepTime);
-}
-
-function updateDisplay() {
-  animateBankrollChange(parseInt(bankrollEl.textContent), bankroll);
-  betEl.textContent = bet;
-  renderHands();
-}
-
-function resetHands() {
-  playerHands = [[]];
-  dealerHand = [];
-  activeHand = 0;
-  insuranceBet = 0;
-  revealDealer = false;
-  splitHandEl.style.display = 'none';
-  messageEl.textContent = '';
-  playerCardsEls.forEach(el => el.textContent = '');
-  dealerCardsEl.textContent = '';
-}
-
+// -------------------- SCORING --------------------
 function calculateScore(hand) {
   let score = 0;
   let aces = 0;
-  for (let card of hand) {
+  hand.forEach(card => {
     if (['J','Q','K'].includes(card.value)) score += 10;
-    else if (card.value === 'A') {
-      score += 11;
-      aces += 1;
-    } else score += parseInt(card.value);
-  }
+    else if (card.value === 'A') { score += 11; aces++; }
+    else score += parseInt(card.value);
+  });
   while (score > 21 && aces > 0) {
     score -= 10;
-    aces -= 1;
+    aces--;
   }
   return score;
-}
-
-async function dealCards() {
-  playerHands[0].push(drawCard());
-  renderHands();
-  await new Promise(r => setTimeout(r, 500));
-  dealerHand.push(drawCard());
-  renderHands();
-  await new Promise(r => setTimeout(r, 500));
-  playerHands[0].push(drawCard());
-  renderHands();
-  await new Promise(r => setTimeout(r, 500));
-  dealerHand.push(drawCard());
-  renderHands();
-}
-
-function showOverlay(type) {
-  const overlay = document.createElement('div');
-  overlay.className = `overlay ${type}`;
-  overlay.textContent = type === 'win' ? 'YOU WIN!' : 'YOU LOSE!';
-  document.body.appendChild(overlay);
-  setTimeout(() => overlay.remove(), 2000);
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function isBlackjack(hand) {
   return hand.length === 2 && calculateScore(hand) === 21;
 }
 
+// -------------------- RENDER --------------------
+function renderHands() {
+  dealerCardsEl.innerHTML = '';
+  dealerHand.forEach((card, i) => {
+    if (i === 0 && !revealDealer) {
+      dealerCardsEl.innerHTML += `<div class="card">🂠</div>`;
+    } else {
+      dealerCardsEl.innerHTML += renderCard(card);
+    }
+  });
+
+  playerCards0El.innerHTML = '';
+  playerHands[0].forEach(card => {
+    playerCards0El.innerHTML += renderCard(card);
+  });
+
+  if (playerHands[1]) {
+    splitHandEl.style.display = 'block';
+    playerCards1El.innerHTML = '';
+    playerHands[1].forEach(card => {
+      playerCards1El.innerHTML += renderCard(card);
+    });
+  } else {
+    splitHandEl.style.display = 'none';
+  }
+}
+
+function renderCard(card) {
+  const red = (card.suit === '♥' || card.suit === '♦') ? 'red' : '';
+  return `<div class="card ${red}">${card.value}${card.suit}</div>`;
+}
+
+// -------------------- GAME FLOW --------------------
+function startRound() {
+  if (bet <= 0) return;
+  gameInProgress = true;
+  revealDealer = false;
+  dealerHand = [];
+  playerHands = [[]];
+  currentHandIndex = 0;
+  messageEl.textContent = '';
+
+  createDeck();
+  shuffleDeck();
+
+  playerHands[0].push(drawCard(), drawCard());
+  dealerHand.push(drawCard(), drawCard());
+
+  renderHands();
+  updateControls();
+  playSound('deal-sound');
+}
+
 async function endRound() {
   revealDealer = true;
   renderHands();
-  await sleep(800); // pause before revealing dealer’s hidden card
+  await sleep(800);
 
-  // Dealer draws until 17+
   while (calculateScore(dealerHand) < 17) {
     dealerHand.push(drawCard());
     renderHands();
-    await sleep(800); // pause between each dealer card
+    await sleep(800);
   }
 
-  // Evaluate each player hand
   playerHands.forEach((hand, i) => {
     const score = calculateScore(hand);
     const dealerScore = calculateScore(dealerHand);
@@ -178,134 +184,181 @@ async function endRound() {
       bankroll += bet / playerHands.length;
     } else if (dealerBJ) {
       messageEl.textContent += `Hand ${i+1}: Dealer Blackjack.\n`;
-      showOverlay('lose');
+      playSound('lose-sound');
     } else if (playerBJ) {
       messageEl.textContent += `Hand ${i+1}: Blackjack! You win.\n`;
-      bankroll += bet / playerHands.length * 2.5; // 3:2 payout
-      showOverlay('win');
+      bankroll += bet / playerHands.length * 2.5;
+      playSound('win-sound');
     } else if (score > 21) {
       messageEl.textContent += `Hand ${i+1}: Bust.\n`;
-      showOverlay('lose');
+      playSound('lose-sound');
     } else if (dealerScore > 21 || score > dealerScore) {
       messageEl.textContent += `Hand ${i+1}: Win!\n`;
       bankroll += bet / playerHands.length * 2;
-      showOverlay('win');
+      playSound('win-sound');
     } else if (score === dealerScore) {
       messageEl.textContent += `Hand ${i+1}: Push.\n`;
       bankroll += bet / playerHands.length;
     } else {
       messageEl.textContent += `Hand ${i+1}: Lose.\n`;
-      showOverlay('lose');
+      playSound('lose-sound');
     }
   });
-
-  // Handle insurance
-  if (insuranceBet > 0) {
-    if (dealerHand[0].value === 'A' && calculateScore(dealerHand) === 21) {
-      messageEl.textContent += 'Insurance pays 2:1!\n';
-      bankroll += insuranceBet * 3;
-    } else {
-      messageEl.textContent += 'Insurance lost.\n';
-    }
-  }
 
   bet = 0;
   insuranceBet = 0;
   gameInProgress = false;
   updateDisplay();
+  saveGame();
 }
 
+// -------------------- CONTROLS --------------------
+hitBtn.addEventListener('click', () => {
+  playerHands[currentHandIndex].push(drawCard());
+  renderHands();
+  playSound('deal-sound');
+  if (calculateScore(playerHands[currentHandIndex]) > 21) {
+    endRound();
+  }
+});
 
-document.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    if (gameInProgress) return; // prevent adding chips mid-hand
-    const value = parseInt(chip.dataset.value);
-    if (bankroll >= value) {
+standBtn.addEventListener('click', () => {
+  endRound();
+});
+
+doubleBtn.addEventListener('click', () => {
+  if (bankroll >= bet) {
+    bankroll -= bet;
+    bet *= 2;
+    playerHands[currentHandIndex].push(drawCard());
+    renderHands();
+    endRound();
+  }
+});
+
+splitBtn.addEventListener('click', () => {
+  const hand = playerHands[0];
+  if (hand.length === 2 && hand[0].value === hand[1].value && bankroll >= bet) {
+    bankroll -= bet;
+    playerHands = [[hand[0]], [hand[1]]];
+    playerHands[0].push(drawCard());
+    playerHands[1].push(drawCard());
+    renderHands();
+  }
+});
+
+insuranceBtn.addEventListener('click', () => {
+  if (dealerHand[0].value === 'A' && bankroll >= bet/2) {
+    insuranceBet = bet/2;
+    bankroll -= insuranceBet;
+    messageEl.textContent = 'Insurance taken.\n';
+  }
+});
+
+// -------------------- CHIPS --------------------
+chipButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const value = parseInt(btn.dataset.value);
+    if (bankroll >= value && !gameInProgress) {
       bankroll -= value;
       bet += value;
+      // Animate tokens moving from chip to bet
+      animateTokens(value, btn, betEl);
+
       updateDisplay();
     }
   });
 });
 
-document.getElementById('bet-btn').addEventListener('click', async () => {
-  if (bet === 0 || gameInProgress) return; // prevent betting mid-hand
-  resetHands();
-  createDeck();
-  gameInProgress = true;
-  await dealCards();
-  if (dealerHand[0].value === 'A') {
-    messageEl.textContent = 'Dealer shows Ace. Insurance available.';
+betBtn.addEventListener('click', () => {
+  if (!gameInProgress && bet > 0) {
+    startRound();
   }
 });
 
-document.getElementById('hit-btn').addEventListener('click', () => {
-  if (!gameInProgress) return;
-  playerHands[activeHand].push(drawCard());
-  updateDisplay();
-  if (calculateScore(playerHands[activeHand]) > 21) {
-    if (activeHand === 0 && playerHands.length === 2) {
-      activeHand = 1;
-      messageEl.textContent = 'Switching to Hand 2.';
-    } else {
-      endRound();
-    }
-  }
-});
+// -------------------- TOKEN ANIMATION --------------------
+function animateTokens(chipValue, chipElement, targetElement) {
+  const chipRect = chipElement.getBoundingClientRect();
+  const targetRect = targetElement.getBoundingClientRect();
 
-document.getElementById('stand-btn').addEventListener('click', () => {
-  if (!gameInProgress) return;
-  if (activeHand === 0 && playerHands.length === 2) {
-    activeHand = 1;
-    messageEl.textContent = 'Switching to Hand 2.';
+  for (let i = 0; i < chipValue; i++) {
+    const token = document.createElement('div');
+    token.className = 'token';
+    token.textContent = '$1';
+    document.body.appendChild(token);
+
+    // Start at chip position
+    token.style.left = chipRect.left + 'px';
+    token.style.top = chipRect.top + 'px';
+
+    // Scatter offset
+    const offsetX = (Math.random() - 0.5) * 20;
+    const offsetY = (Math.random() - 0.5) * 20;
+
+    // Animate scatter
+    token.animate([
+      { transform: `translate(0,0)` },
+      { transform: `translate(${offsetX}px, ${offsetY}px)` }
+    ], { duration: 150, fill: 'forwards' });
+
+    // Then animate toward target
+    setTimeout(() => {
+      const dx = targetRect.left - chipRect.left;
+      const dy = targetRect.top - chipRect.top;
+
+      token.animate([
+        { transform: `translate(${offsetX}px, ${offsetY}px)` },
+        { transform: `translate(${dx}px, ${dy}px)` }
+      ], { duration: 600, easing: 'ease-in-out', fill: 'forwards' })
+      .onfinish = () => token.remove();
+    }, 150);
+  }
+}
+
+// -------------------- DISPLAY & CONTROLS --------------------
+function updateDisplay() {
+  bankrollEl.textContent = bankroll;
+  betEl.textContent = bet;
+  updateControls();
+}
+
+function updateControls() {
+  if (!gameInProgress) {
+    hitBtn.disabled = true;
+    standBtn.disabled = true;
+    doubleBtn.classList.add('hidden');
+    splitBtn.classList.add('hidden');
+    insuranceBtn.classList.add('hidden');
+    return;
+  }
+
+  hitBtn.disabled = false;
+  standBtn.disabled = false;
+
+  // Double available only on first two cards
+  if (playerHands[currentHandIndex].length === 2 && bankroll >= bet) {
+    doubleBtn.classList.remove('hidden');
   } else {
-    endRound();
+    doubleBtn.classList.add('hidden');
   }
-});
 
-document.getElementById('double-btn').addEventListener('click', () => {
-  if (!gameInProgress) return;
-  const handBet = bet / playerHands.length;
-  if (bankroll >= handBet) {
-    bankroll -= handBet;
-    bet += handBet;
-    playerHands[activeHand].push(drawCard());
-    updateDisplay();
-    document.getElementById('stand-btn').click();
-  }
-});
-
-document.getElementById('split-btn').addEventListener('click', () => {
-  if (!gameInProgress) return;
-  const hand = playerHands[0];
-  // Only allow split if exactly 2 cards and same value
+  // Split available only if two cards of same value
+  const hand = playerHands[currentHandIndex];
   if (hand.length === 2 && hand[0].value === hand[1].value && bankroll >= bet) {
-    bankroll -= bet; // place an equal bet for the second hand
-    playerHands = [
-      [hand[0], drawCard()],
-      [hand[1], drawCard()]
-    ];
-    splitHandEl.style.display = 'block';
-    updateDisplay();
-    messageEl.textContent = 'Hand split!';
+    splitBtn.classList.remove('hidden');
   } else {
-    messageEl.textContent = 'Cannot split.';
+    splitBtn.classList.add('hidden');
   }
-});
 
-document.getElementById('insurance-btn').addEventListener('click', () => {
-  if (!gameInProgress) return;
-  if (dealerHand[0].value === 'A') {
-    const insuranceCost = bet / 2;
-    if (bankroll >= insuranceCost) {
-      bankroll -= insuranceCost;
-      insuranceBet = insuranceCost;
-      updateDisplay();
-      messageEl.textContent = 'Insurance placed.';
-    } else {
-      messageEl.textContent = 'Not enough bankroll for insurance.';
-    }
+  // Insurance available if dealer shows Ace
+  if (dealerHand[0].value === 'A' && insuranceBet === 0 && bankroll >= bet/2) {
+    insuranceBtn.classList.remove('hidden');
   } else {
-    messageEl.textContent = 'Insurance not available.';
+    insuranceBtn.classList.add('hidden');
   }
-});
+}
+
+// -------------------- UTIL --------------------
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
