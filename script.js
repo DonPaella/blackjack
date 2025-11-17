@@ -9,6 +9,8 @@ let handBets = [0]; // track bet per hand
 let currentHandIndex = 0;
 let gameInProgress = false;
 let revealDealer = false;
+let handActionTaken = []; // track if hit/stand happened per hand
+let betChips = []; // track denominations used for current bet
 
 // -------------------- DOM ELEMENTS --------------------
 const bankrollEl = document.getElementById('bankroll-amount');
@@ -30,6 +32,9 @@ const insuranceBtn = document.getElementById('insurance-btn');
 
 const chipButtons = document.querySelectorAll('.chip');
 const betBtn = document.getElementById('bet-btn');
+
+const leftHandEl = document.getElementById('left-hand');
+const rightHandEl = document.getElementById('right-hand');
 
 // -------------------- AUDIO --------------------
 function playSound(id) {
@@ -119,7 +124,7 @@ function renderHands() {
 }
 
 function renderCard(card) {
-  const red = (card.suit === '♥' || card.suit === '♦') ? 'red' : '';
+  const red = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
   return `<div class="card ${red}">${card.value}${card.suit}</div>`;
 }
 
@@ -132,6 +137,7 @@ function startRound() {
   playerHands = [[]];
   handBets = [bet];
   currentHandIndex = 0;
+  handActionTaken = [false];
   messageEl.textContent = '';
 
   createDeck();
@@ -146,14 +152,18 @@ function startRound() {
 }
 
 async function endRound() {
-  revealDealer = true;
-  renderHands();
-  await sleep(800);
-
-  while (calculateScore(dealerHand) < 17) {
-    dealerHand.push(drawCard());
+  // Only play dealer if at least one hand not busted
+  const activeHands = playerHands.filter(h => calculateScore(h) <= 21);
+  if (activeHands.length > 0) {
+    revealDealer = true;
     renderHands();
     await sleep(800);
+
+    while (calculateScore(dealerHand) < 17) {
+      dealerHand.push(drawCard());
+      renderHands();
+      await sleep(800);
+    }
   }
 
   playerHands.forEach((hand, i) => {
@@ -193,6 +203,7 @@ async function endRound() {
   insuranceBet = 0;
   handBets = [0];
   gameInProgress = false;
+  betChips = [];
   animateNumber(bankrollEl, bankroll);
   animateNumber(betEl, bet);
   updateControls();
@@ -216,50 +227,102 @@ function showOverlay(id) {
   setTimeout(() => overlay.classList.remove('active'), 1500);
 }
 
+// -------------------- HAND ANIMATIONS --------------------
+function animateHand(action) {
+  if (action === 'hit') {
+    leftHandEl.classList.add('tap');
+    setTimeout(() => leftHandEl.classList.remove('tap'), 600);
+  }
+  if (action === 'stand') {
+    rightHandEl.classList.add('wave');
+    setTimeout(() => rightHandEl.classList.remove('wave'), 800);
+  }
+  if (action === 'split') {
+    leftHandEl.classList.add('wave');
+    rightHandEl.classList.add('wave');
+    setTimeout(() => {
+      leftHandEl.classList.remove('wave');
+      rightHandEl.classList.remove('wave');
+    }, 800);
+  }
+}
+
 // -------------------- CONTROLS --------------------
 hitBtn.addEventListener('click', () => {
   playerHands[currentHandIndex].push(drawCard());
+  handActionTaken[currentHandIndex] = true; // mark that action taken
   renderHands();
   playSound('deal-sound');
+  animateHand('hit');
+
   if (calculateScore(playerHands[currentHandIndex]) > 21) {
+    // immediate bust: lose this hand without dealer play
+    playSound('lose-sound');
+    showOverlay('lose-overlay');
     nextHandOrEnd();
+  } else {
+    updateControls();
   }
 });
 
 standBtn.addEventListener('click', () => {
+  handActionTaken[currentHandIndex] = true;
+  animateHand('stand');
   nextHandOrEnd();
 });
 
 doubleBtn.addEventListener('click', () => {
-  if (bankroll >= handBets[currentHandIndex]) {
+  if (
+    bankroll >= handBets[currentHandIndex] &&
+    playerHands[currentHandIndex].length === 2 &&
+    !handActionTaken[currentHandIndex]
+  ) {
     bankroll -= handBets[currentHandIndex];
     handBets[currentHandIndex] *= 2;
     playerHands[currentHandIndex].push(drawCard());
+    handActionTaken[currentHandIndex] = true;
     renderHands();
     animateNumber(bankrollEl, bankroll);
+    animateHand('hit');
     nextHandOrEnd();
   }
 });
 
 splitBtn.addEventListener('click', () => {
-  const hand = playerHands[0];
-  if (hand.length === 2 && hand[0].value === hand[1].value && bankroll >= bet) {
-    bankroll -= bet;
-    handBets = [bet, bet];
-    playerHands = [[hand[0]], [hand[1]]];
-    playerHands[0].push(drawCard());
-    playerHands[1].push(drawCard());
+  const hand = playerHands[currentHandIndex];
+  const wager = handBets[currentHandIndex];
+  if (
+    hand.length === 2 &&
+    hand[0].value === hand[1].value &&
+    bankroll >= wager
+  ) {
+    bankroll -= wager;
+    // split into two hands
+    const left = [hand[0]];
+    const right = [hand[1]];
+    playerHands[currentHandIndex] = left;
+    playerHands.splice(currentHandIndex + 1, 0, right);
+    handBets.splice(currentHandIndex + 1, 0, wager);
+    handActionTaken.splice(currentHandIndex, 1, false);
+    handActionTaken.splice(currentHandIndex + 1, 0, false);
+
+    left.push(drawCard());
+    right.push(drawCard());
+
     renderHands();
-    updateControls();
     animateNumber(bankrollEl, bankroll);
+    animateHand('split');
+    updateControls();
   }
 });
 
-// -------------------- INSURANCE --------------------
 insuranceBtn.addEventListener('click', () => {
-  // ✅ FIXED: Only allow insurance if dealer up-card is Ace
-  if (dealerHand[1]?.value === 'A' && insuranceBet === 0 && bankroll >= bet/2) {
-    insuranceBet = bet/2;
+  if (
+    dealerHand[1]?.value === 'A' &&
+    insuranceBet === 0 &&
+    bankroll >= bet / 2
+  ) {
+    insuranceBet = bet / 2;
     bankroll -= insuranceBet;
     animateNumber(bankrollEl, bankroll);
     updateControls();
@@ -271,11 +334,14 @@ chipButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     const value = parseInt(btn.dataset.value);
     if (bankroll >= value && !gameInProgress) {
-      // Animate tokens first, then update bankroll/bet numbers
+      // track denominations
+      for (let i = 0; i < value / value; i++) {
+        betChips.push(value);
+      }
       animateTokens(value, btn, betEl, () => {
         bankroll -= value;
         bet += value;
-        handBets = [bet]; // reset handBets to match current bet
+        handBets = [bet];
         animateNumber(bankrollEl, bankroll);
         animateNumber(betEl, bet);
         updateControls();
@@ -296,10 +362,12 @@ function animateTokens(chipValue, chipElement, targetElement, callback) {
   const targetRect = targetElement.getBoundingClientRect();
   let finished = 0;
 
-  for (let i = 0; i < chipValue; i++) {
+  // animate tokens equal to chip denomination count
+  for (let i = 0; i < chipValue / 5; i++) { // example: $25 chip spawns 5 tokens
     const token = document.createElement('div');
     token.className = 'token';
-    token.textContent = '$1';
+    token.textContent = `$${chipValue}`;
+    token.style.background = chipElement.style.background;
     document.body.appendChild(token);
 
     token.style.position = 'fixed';
@@ -330,7 +398,7 @@ function animateTokens(chipValue, chipElement, targetElement, callback) {
         .onfinish = () => {
           token.remove();
           finished++;
-          if (finished === chipValue && callback) callback();
+          if (finished === chipValue / 5 && callback) callback();
         };
     }, 200);
   }
@@ -348,11 +416,12 @@ function updateControls() {
   hitBtn.disabled = !inPlay;
   standBtn.disabled = !inPlay;
 
-  // Double available only on first two cards, sufficient bankroll
+  // Double available only on first two cards, sufficient bankroll, no prior action
   if (
     inPlay &&
     playerHands[currentHandIndex]?.length === 2 &&
-    bankroll >= handBets[currentHandIndex]
+    bankroll >= handBets[currentHandIndex] &&
+    !handActionTaken[currentHandIndex]
   ) {
     doubleBtn.classList.remove('hidden');
   } else {
@@ -383,6 +452,16 @@ function updateControls() {
   } else {
     insuranceBtn.classList.add('hidden');
   }
+
+  // Dim chips if unaffordable
+  chipButtons.forEach(btn => {
+    const value = parseInt(btn.dataset.value, 10);
+    if (bankroll < value || gameInProgress) {
+      btn.classList.add('dim');
+    } else {
+      btn.classList.remove('dim');
+    }
+  });
 }
 
 // -------------------- UTIL --------------------
