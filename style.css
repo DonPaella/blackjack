@@ -4,9 +4,25 @@
 body {
   margin: 0;
   font-family: 'Montserrat', sans-serif;
-  background: radial-gradient(circle at center, #064420, #032d14);
+  /* Enhanced: Richer, deep green velvet look */
+  background: radial-gradient(circle at center, #016e3c 0%, #004d28 40%, #003b1e 100%);
   color: #fff;
   overflow-x: hidden;
+}
+
+/* Add a subtle felt texture for extra flair */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* You would need a subtle felt image for this, or just rely on the gradient */
+    /* background-image: url('felt-texture.png'); */
+    opacity: 0.1;
+    pointer-events: none;
+    z-index: -1;
 }
 
 /* ---------- GAME LAYOUT ---------- */
@@ -62,7 +78,8 @@ body {
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s; /* Add box-shadow transition */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5); /* Add initial shadow */
 }
 
 .chip.red {
@@ -83,6 +100,7 @@ body {
 
 .chip:hover {
   transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.7);
 }
 
 .chip.dim {
@@ -90,7 +108,15 @@ body {
   filter: grayscale(80%);
   animation: none;
   cursor: not-allowed;
+  transform: scale(1); /* Ensure dim chips don't scale on hover */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
 }
+/* Ensure disabled state is visually clear */
+.chip:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 
 /* ---------- PLACE BET BUTTON ---------- */
 #bet-btn {
@@ -101,12 +127,21 @@ body {
   color: #000;
   border-radius: 10px;
   animation: pulseYellow 2s infinite;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
 }
 #bet-btn:hover {
   transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.7);
 }
+#bet-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    animation: none;
+}
+
 
 /* ---------- CONTROL BUTTONS ---------- */
 #controls {
@@ -119,6 +154,13 @@ body {
 
 #controls .row {
   margin: 10px 0;
+}
+
+/* Base style for all controls buttons to ensure consistent disabled styling */
+#controls button {
+    border: none;
+    transition: transform 0.2s, background 0.2s, opacity 0.2s;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
 }
 
 #hit-btn {
@@ -171,6 +213,16 @@ body {
 
 #controls button:hover {
   transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.7);
+}
+
+/* Style for disabled buttons so they stop animating and aren't clickable */
+#controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+    animation: none;
+    transform: scale(1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 /* ---------- CARDS ---------- */
@@ -223,12 +275,18 @@ body {
   justify-content: center;
   align-items: center;
   z-index: 2000;
+  pointer-events: none; /* Ensure clicks pass through overlays */
 }
 
 .overlay.active {
   display: flex;
   animation: fadeOut 2s forwards;
 }
+/* Ensure pointer events are active only during animation */
+.overlay.active {
+    pointer-events: all;
+}
+
 
 .overlay.win { color: #2ecc71; }
 .overlay.lose { color: #e74c3c; }
@@ -242,9 +300,9 @@ body {
 }
 
 @keyframes fadeOut {
-  0% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { opacity: 0; }
+  0% { opacity: 1; pointer-events: all; }
+  80% { opacity: 1; pointer-events: all; }
+  100% { opacity: 0; pointer-events: none; }
 }
 
 @keyframes blackjackPulse {

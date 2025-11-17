@@ -17,10 +17,10 @@ const bankrollEl = document.getElementById('bankroll-amount');
 const betEl = document.getElementById('bet-amount');
 const dealerCardsEl = document.getElementById('dealer-cards');
 const dealerScoreEl = document.getElementById('dealer-score');
-const playerCards0El = document.getElementById('player-cards-0');
-const playerCards1El = document.getElementById('player-cards-1');
-const playerScore0El = document.getElementById('player-score-0');
-const playerScore1El = document.getElementById('player-score-1');
+const playerCardsLeftEl = document.getElementById('player-cards-0');
+const playerCardsRightEl = document.getElementById('player-cards-1');
+const playerScoreLeftEl = document.getElementById('player-score-0');
+const playerScoreRightEl = document.getElementById('player-score-1');
 const splitHandEl = document.getElementById('split-hand');
 const messageEl = document.getElementById('message');
 
@@ -103,24 +103,23 @@ function renderHands() {
   });
   dealerScoreEl.textContent = revealDealer ? `Score: ${calculateScore(dealerHand)}` : '';
 
-  // Rendering logic needs to handle multiple hands correctly (iterating over the array)
-  // Assumes playerCards0El is for playerHands[0] and playerCards1El is for playerHands[1]
-  playerCards0El.innerHTML = '';
+  // Rendering logic for player hands (iterates over the array of hands)
+  playerCardsLeftEl.innerHTML = '';
   playerHands[0].forEach(card => {
-      playerCards0El.innerHTML += renderCard(card);
+    playerCardsLeftEl.innerHTML += renderCard(card);
   });
-  playerScore0El.textContent = `Score: ${calculateScore(playerHands[0])}`;
+  playerScoreLeftEl.textContent = `Score: ${calculateScore(playerHands[0])}`;
 
   if (playerHands.length > 1) { // Check if a second hand actually exists
     splitHandEl.style.display = 'block';
-    playerCards1El.innerHTML = '';
+    playerCardsRightEl.innerHTML = '';
     playerHands[1].forEach(card => {
-      playerCards1El.innerHTML += renderCard(card);
+      playerCardsRightEl.innerHTML += renderCard(card);
     });
-    playerScore1El.textContent = `Score: ${calculateScore(playerHands[1])}`;
+    playerScoreRightEl.textContent = `Score: ${calculateScore(playerHands[1])}`;
   } else {
     splitHandEl.style.display = 'none';
-    playerScore1El.textContent = '';
+    playerScoreRightEl.textContent = '';
   }
 }
 
@@ -129,7 +128,27 @@ function renderCard(card) {
   return `<div class="card ${color}">${card.value}${card.suit}</div>`;
 }
 
-// -------------------- GAME FLOW --------------------
+// -------------------- GAME FLOW & UTILS --------------------
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function animateNumber(element, newValue) {
+  const start = parseInt(element.textContent || '0', 10);
+  const end = newValue;
+  const duration = 500;
+  const startTime = performance.now();
+
+  function step(currentTime) {
+    const progress = Math.min((currentTime - startTime) / duration, 1);
+    const value = Math.floor(start + (end - start) * progress);
+    element.textContent = value;
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 function startRound() {
   if (bet <= 0) return;
   gameInProgress = true;
@@ -169,12 +188,12 @@ async function endRound() {
   // --- INSURANCE PAYOUT LOGIC ---
   if (insuranceBet > 0) {
       if (isBlackjack(dealerHand)) {
-          bankroll += insuranceBet * 3; // Insurance pays 2:1
+          bankroll += insuranceBet * 3; // Insurance pays 2:1 (original bet + 2x winnings)
           playSound('win-sound');
       } else {
           playSound('lose-sound');
       }
-      insuranceBet = 0; // Reset insurance bet regardless of outcome
+      insuranceBet = 0; 
       animateNumber(bankrollEl, bankroll);
   }
 
@@ -222,9 +241,14 @@ async function endRound() {
 
 function nextHandOrEnd() {
   if (currentHandIndex < playerHands.length - 1) {
+    // Move to the next hand
     currentHandIndex++;
     renderHands();
     updateControls();
+    // If next hand is split aces, it's a stand automatically
+    if (playerHands[currentHandIndex].length === 2 && playerHands[currentHandIndex].value === 'A' && handActionTaken[currentHandIndex]) {
+        nextHandOrEnd();
+    }
   } else {
     endRound();
   }
@@ -251,7 +275,7 @@ function animateHand(action) {
 // -------------------- BUTTON EVENTS --------------------
 hitBtn.addEventListener('click', () => {
   playerHands[currentHandIndex].push(drawCard());
-  handActionTaken[currentHandIndex] = true;
+  handActionTaken[currentHandIndex] = true; // No more double/split after this
   renderHands();
   playSound('deal-sound');
   animateHand('hit');
@@ -279,8 +303,8 @@ doubleBtn.addEventListener('click', () => {
   bankroll -= wager;
   handBets[currentHandIndex] = wager * 2;
 
-  playerHands[currentHandIndex].push(drawCard());
-  handActionTaken[currentHandIndex] = true; 
+  playerHands[currentHandIndex].push(drawCard()); // One card only
+  handActionTaken[currentHandIndex] = true; // Hand is finished
 
   renderHands();
   animateNumber(bankrollEl, bankroll);
@@ -291,7 +315,7 @@ doubleBtn.addEventListener('click', () => {
     playSound('lose-sound');
   }
 
-  nextHandOrEnd(); 
+  nextHandOrEnd(); // End the turn/hand
 });
 
 // --- SPLIT LOGIC ---
@@ -302,7 +326,7 @@ splitBtn.addEventListener('click', () => {
   bankroll -= wager;
 
   const originalHand = playerHands[currentHandIndex];
-  const newHand = [originalHand.pop()]; 
+  const newHand = [originalHand.pop()]; // Move the second card to a new array
 
   playerHands.splice(currentHandIndex + 1, 0, newHand);
   handBets.splice(currentHandIndex + 1, 0, wager);
@@ -313,11 +337,11 @@ splitBtn.addEventListener('click', () => {
   
   renderHands();
   animateNumber(bankrollEl, bankroll);
-  // playSound('split-sound');
+  // playSound('split-sound'); 
   animateHand('split');
 
-  // Check the value of the card that REMAINS in the original hand
-  if (playerHands[currentHandIndex][0].value === 'A') {
+  // Special case: If split Aces, mark hand as done and move on
+  if (playerHands[currentHandIndex][0].value === 'A') { // Check the value of the first card in the hand
       handActionTaken[currentHandIndex] = true; 
       nextHandOrEnd(); 
   } else {
@@ -345,9 +369,7 @@ chipButtons.forEach(btn => {
     const value = parseInt(btn.dataset.value);
     const color = btn.dataset.color;
     if (bankroll >= value && !gameInProgress) {
-      // Use value directly to spawn tokens, not a loop counter
       spawnToken(value, color, btn, betEl, () => {
-          // This callback runs after animation finishes
           bankroll -= value;
           bet += value;
           handBets = [bet];
@@ -381,7 +403,6 @@ function spawnToken(amount, color, chipElement, targetElement, callback) {
   token.style.top = chipRect.top + 'px';
   token.style.zIndex = 9999;
 
-  // Reduced spread amount for better visuals
   const offsetX = (Math.random() - 0.5) * 50; 
   const offsetY = (Math.random() - 0.5) * 50;
 
@@ -423,7 +444,7 @@ function canDouble(handIndex) {
 
 function canSplit(handIndex) {
   const hand = playerHands[handIndex] || [];
-  // FIXED: Compare the 'value' property of the card objects
+  // Compare the 'value' property of the card objects within the hand array
   return (
     gameInProgress &&
     hand.length === 2 &&
@@ -433,7 +454,7 @@ function canSplit(handIndex) {
 }
 
 function canInsure() {
-  // FIXED: Check the 'value' property of the dealer's face-up card (index 0)
+  // Insurance offered if the dealer's UP card (index 0 of dealerHand) is an Ace
   return (
     gameInProgress &&
     dealerHand[0]?.value === 'A' && 
@@ -469,25 +490,6 @@ function updateControls() {
       btn.disabled = false;
     }
   });
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function animateNumber(element, newValue) {
-  const start = parseInt(element.textContent || '0', 10);
-  const end = newValue;
-  const duration = 500;
-  const startTime = performance.now();
-
-  function step(currentTime) {
-    const progress = Math.min((currentTime - startTime) / duration, 1);
-    const value = Math.floor(start + (end - start) * progress);
-    element.textContent = value;
-    if (progress < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
 }
 
 // Initialize display on load

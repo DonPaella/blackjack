@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Blackjack</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Blackjack Pro</title>
+  <!-- Link to your existing CSS file -->
+  <link rel="stylesheet" href="style.css" /> 
 </head>
 <body>
 
@@ -29,6 +30,7 @@
         <div id="player-cards-0"></div>
         <div id="player-score-0" class="score"></div>
       </div>
+      <!-- Split hand container initially hidden -->
       <div class="hand" id="split-hand" style="display:none;">
         <h2>Player Hand 2</h2>
         <div id="player-cards-1"></div>
@@ -44,13 +46,13 @@
     <!-- Controls -->
     <div id="controls">
       <div class="row">
-        <button id="hit-btn" class="btn-hit">Hit</button>
-        <button id="stand-btn" class="btn-stand">Stand</button>
+        <button id="hit-btn" class="btn-hit" disabled>Hit</button>
+        <button id="stand-btn" class="btn-stand" disabled>Stand</button>
       </div>
       <div class="row">
-        <button id="double-btn">Double Down</button>
-        <button id="split-btn">Split</button>
-        <button id="insurance-btn">Insurance</button>
+        <button id="double-btn" disabled>Double Down</button>
+        <button id="split-btn" disabled>Split</button>
+        <button id="insurance-btn" disabled>Insurance</button>
       </div>
     </div>
 
@@ -59,7 +61,7 @@
       <button class="chip red" data-value="5" data-color="#e74c3c">$5</button>
       <button class="chip blue" data-value="25" data-color="#3498db">$25</button>
       <button class="chip green" data-value="100" data-color="#2ecc71">$100</button>
-      <button id="bet-btn" class="btn-bet">Place Bet</button>
+      <button id="bet-btn" class="btn-bet" disabled>Place Bet</button>
     </div>
 
     <!-- Message Area -->
@@ -73,11 +75,17 @@
   <div id="push-overlay" class="overlay push">PUSH</div>
 
   <!-- AUDIO (SFX) -->
+  <!-- You need to provide these sound files in a 'sounds' directory -->
   <audio id="deal-sound" src="sounds/deal.mp3" preload="auto"></audio>
   <audio id="win-sound" src="sounds/win.mp3" preload="auto"></audio>
   <audio id="lose-sound" src="sounds/lose.mp3" preload="auto"></audio>
+  <!-- Optional sounds you can add: -->
+  <!-- <audio id="split-sound" src="sounds/split.mp3" preload="auto"></audio> -->
+  <!-- <audio id="chip-sound" src="sounds/chip.mp3" preload="auto"></audio> -->
+
 
   <!-- GAME LOGIC -->
+  <!-- Link to the final, corrected JS file -->
   <script src="script.js"></script>
 </body>
 </html>
