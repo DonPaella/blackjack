@@ -398,6 +398,8 @@ function updateControls() {
   hitBtn.disabled = !inPlay;
   standBtn.disabled = !inPlay;
 
+  // --- DOUBLE DOWN ---
+  // Available only if: hand has exactly 2 cards, no action taken yet, bankroll >= current bet
   if (
     inPlay &&
     playerHands[currentHandIndex]?.length === 2 &&
@@ -409,6 +411,9 @@ function updateControls() {
     doubleBtn.classList.add('hidden');
   }
 
+  // --- SPLIT ---
+  // Available if: hand has exactly 2 cards of the same value, bankroll >= current bet
+  // Works on any hand (including split hands)
   const hand = playerHands[currentHandIndex] || [];
   if (
     inPlay &&
@@ -421,6 +426,8 @@ function updateControls() {
     splitBtn.classList.add('hidden');
   }
 
+  // --- INSURANCE ---
+  // Available if: dealer’s visible card is Ace, insurance not already taken, bankroll >= half of bet
   if (
     inPlay &&
     dealerHand[1]?.value === 'A' &&
@@ -432,6 +439,7 @@ function updateControls() {
     insuranceBtn.classList.add('hidden');
   }
 
+  // --- CHIP DIMMING ---
   chipButtons.forEach(btn => {
     const value = parseInt(btn.dataset.value, 10);
     if (bankroll < value || gameInProgress) {
@@ -441,6 +449,7 @@ function updateControls() {
     }
   });
 }
+
 
 // -------------------- UTIL --------------------
 function sleep(ms) {
