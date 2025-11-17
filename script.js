@@ -5,7 +5,7 @@ let insuranceBet = 0;
 let deck = [];
 let dealerHand = [];
 let playerHands = [[]];
-let handBets =;
+let handBets = [0];
 let currentHandIndex = 0;
 let gameInProgress = false;
 let revealDealer = false;
@@ -103,19 +103,21 @@ function renderHands() {
   });
   dealerScoreEl.textContent = revealDealer ? `Score: ${calculateScore(dealerHand)}` : '';
 
+  // Rendering logic needs to handle multiple hands correctly (iterating over the array)
+  // Assumes playerCards0El is for playerHands[0] and playerCards1El is for playerHands[1]
   playerCards0El.innerHTML = '';
-  playerHands.forEach(card => {
-    playerCards0El.innerHTML += renderCard(card);
+  playerHands[0].forEach(card => {
+      playerCards0El.innerHTML += renderCard(card);
   });
-  playerScore0El.textContent = `Score: ${calculateScore(playerHands)}`;
+  playerScore0El.textContent = `Score: ${calculateScore(playerHands[0])}`;
 
-  if (playerHands) {
+  if (playerHands.length > 1) { // Check if a second hand actually exists
     splitHandEl.style.display = 'block';
     playerCards1El.innerHTML = '';
-    playerHands.forEach(card => {
+    playerHands[1].forEach(card => {
       playerCards1El.innerHTML += renderCard(card);
     });
-    playerScore1El.textContent = `Score: ${calculateScore(playerHands)}`;
+    playerScore1El.textContent = `Score: ${calculateScore(playerHands[1])}`;
   } else {
     splitHandEl.style.display = 'none';
     playerScore1El.textContent = '';
@@ -133,7 +135,7 @@ function startRound() {
   gameInProgress = true;
   revealDealer = false;
   dealerHand = [];
-  playerHands = [[]];
+  playerHands = [[]]; // Reset to a single empty hand
   handBets = [bet];
   handActionTaken = [false];
   currentHandIndex = 0;
@@ -142,6 +144,7 @@ function startRound() {
   createDeck();
   shuffleDeck();
 
+  // Push cards into the first hand (playerHands[0])
   playerHands[0].push(drawCard(), drawCard());
   dealerHand.push(drawCard(), drawCard());
 
@@ -162,11 +165,11 @@ async function endRound() {
       await sleep(800);
     }
   }
-
+  
   // --- INSURANCE PAYOUT LOGIC ---
   if (insuranceBet > 0) {
       if (isBlackjack(dealerHand)) {
-          bankroll += insuranceBet * 3; // Insurance pays 2:1 (original bet + 2x winnings)
+          bankroll += insuranceBet * 3; // Insurance pays 2:1
           playSound('win-sound');
       } else {
           playSound('lose-sound');
@@ -209,7 +212,6 @@ async function endRound() {
   });
 
   bet = 0;
-  // insuranceBet reset above
   handBets = [0];
   betChips = [];
   gameInProgress = false;
@@ -278,7 +280,7 @@ doubleBtn.addEventListener('click', () => {
   handBets[currentHandIndex] = wager * 2;
 
   playerHands[currentHandIndex].push(drawCard());
-  handActionTaken[currentHandIndex] = true; // Prevents hitting/doubling again
+  handActionTaken[currentHandIndex] = true; 
 
   renderHands();
   animateNumber(bankrollEl, bankroll);
@@ -289,7 +291,7 @@ doubleBtn.addEventListener('click', () => {
     playSound('lose-sound');
   }
 
-  nextHandOrEnd(); // Ends the hand/turn after exactly one card
+  nextHandOrEnd(); 
 });
 
 // --- SPLIT LOGIC ---
@@ -297,29 +299,27 @@ splitBtn.addEventListener('click', () => {
   if (!canSplit(currentHandIndex)) return;
 
   const wager = handBets[currentHandIndex];
-  bankroll -= wager; // Deduct the second bet amount
+  bankroll -= wager;
 
   const originalHand = playerHands[currentHandIndex];
-  const newHand = [originalHand.pop()]; // Move the second card to a new array
+  const newHand = [originalHand.pop()]; 
 
-  // Insert the new hand and bet immediately after the current index
   playerHands.splice(currentHandIndex + 1, 0, newHand);
   handBets.splice(currentHandIndex + 1, 0, wager);
   handActionTaken.splice(currentHandIndex + 1, 0, false);
 
-  // Deal the second card to both hands
   playerHands[currentHandIndex].push(drawCard());
   newHand.push(drawCard());
   
   renderHands();
   animateNumber(bankrollEl, bankroll);
-  // playSound('split-sound'); // Optional sound effect
+  // playSound('split-sound');
   animateHand('split');
 
-  // Special case: If split Aces, only one card is allowed per hand
-  if (playerHands[currentHandIndex].value === 'A') { // Check the value of the first card in the hand
-      handActionTaken[currentHandIndex] = true; // Mark current hand as done
-      nextHandOrEnd(); // Move immediately to the second (right) hand
+  // Check the value of the card that REMAINS in the original hand
+  if (playerHands[currentHandIndex][0].value === 'A') {
+      handActionTaken[currentHandIndex] = true; 
+      nextHandOrEnd(); 
   } else {
       updateControls();
   }
@@ -335,31 +335,26 @@ insuranceBtn.addEventListener('click', () => {
   insuranceBet = insuranceWager;
 
   animateNumber(bankrollEl, bankroll);
-  // playSound('chip-sound'); // Optional sound effect
+  // playSound('chip-sound');
   updateControls();
 });
 
 // -------------------- CHIPS --------------------
-// Reverted chip logic to original provided code snippet
 chipButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     const value = parseInt(btn.dataset.value);
     const color = btn.dataset.color;
     if (bankroll >= value && !gameInProgress) {
-      // Your existing spawnToken logic seems to work for visuals, keeping it as is
-      let count = 1; // Simplified this, used to iterate by amount previously?
-      for (let i = 0; i < count; i++) {
-        spawnToken(value, color, btn, betEl, () => { // Pass value instead of 1
-          if (i === count - 1) {
-            bankroll -= value;
-            bet += value;
-            handBets = [bet];
-            animateNumber(bankrollEl, bankroll);
-            animateNumber(betEl, bet);
-            updateControls();
-          }
-        });
-      }
+      // Use value directly to spawn tokens, not a loop counter
+      spawnToken(value, color, btn, betEl, () => {
+          // This callback runs after animation finishes
+          bankroll -= value;
+          bet += value;
+          handBets = [bet];
+          animateNumber(bankrollEl, bankroll);
+          animateNumber(betEl, bet);
+          updateControls();
+      });
     }
   });
 });
@@ -386,8 +381,9 @@ function spawnToken(amount, color, chipElement, targetElement, callback) {
   token.style.top = chipRect.top + 'px';
   token.style.zIndex = 9999;
 
-  const offsetX = (Math.random() - 0.5) * 200;
-  const offsetY = (Math.random() - 0.5) * 200;
+  // Reduced spread amount for better visuals
+  const offsetX = (Math.random() - 0.5) * 50; 
+  const offsetY = (Math.random() - 0.5) * 50;
 
   token.animate(
     [{ transform: `translate(0,0)` }, { transform: `translate(${offsetX}px, ${offsetY}px)` }],
@@ -415,12 +411,11 @@ function spawnToken(amount, color, chipElement, targetElement, callback) {
 
 // -------------------- DISPLAY & CONTROLS & UTILS --------------------
 
-// Helper functions for dynamic button controls
 function canDouble(handIndex) {
   const hand = playerHands[handIndex] || [];
   return (
     gameInProgress &&
-    hand.length === 2 && // Only on initial two cards
+    hand.length === 2 && 
     !handActionTaken[handIndex] &&
     bankroll >= handBets[handIndex]
   );
@@ -428,19 +423,20 @@ function canDouble(handIndex) {
 
 function canSplit(handIndex) {
   const hand = playerHands[handIndex] || [];
+  // FIXED: Compare the 'value' property of the card objects
   return (
     gameInProgress &&
     hand.length === 2 &&
-    hand[0]?.value === hand[1]?.value && // Check if values (e.g. 'A' vs 'A') are same
+    hand[0]?.value === hand[1]?.value && 
     bankroll >= handBets[handIndex]
   );
 }
 
 function canInsure() {
-  // Insurance offered if the dealer's UP card (index 0 of dealerHand) is an Ace
+  // FIXED: Check the 'value' property of the dealer's face-up card (index 0)
   return (
     gameInProgress &&
-    dealerHand[0]?.value === 'A' &&
+    dealerHand[0]?.value === 'A' && 
     insuranceBet === 0 &&
     bet > 0 &&
     bankroll >= bet / 2
@@ -456,7 +452,6 @@ function updateDisplay() {
 function updateControls() {
   const inPlay = gameInProgress;
   
-  // Use the .disabled property on the buttons directly
   hitBtn.disabled = !inPlay;
   standBtn.disabled = !inPlay;
   doubleBtn.disabled = !canDouble(currentHandIndex);
@@ -466,7 +461,6 @@ function updateControls() {
 
   chipButtons.forEach(btn => {
     const value = parseInt(btn.dataset.value, 10);
-    // Use the 'dim' class for styling only, ensure they are also disabled
     if (bankroll < value || gameInProgress) {
       btn.classList.add('dim');
       btn.disabled = true;
@@ -477,7 +471,6 @@ function updateControls() {
   });
 }
 
-// -------------------- UTIL --------------------
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
