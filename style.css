@@ -289,7 +289,7 @@ body {
 .player-hand-visual .hand-emoji {
   font-size: 140px;
   display: inline-block;
-  transform: scaleX(-1) rotateZ(-90deg); /* flip horizontally, thumb left, face up */
+  transform: scaleX(-1) rotateZ(0deg); /* flipped horizontally, upright, thumb left */
 }
 
 /* ---------- HAND ANIMATIONS ---------- */
@@ -301,17 +301,17 @@ body {
 }
 
 @keyframes handTap {
-  0% { transform: scaleX(-1) rotateZ(-90deg) translateY(0) scale(1); }
-  25% { transform: scaleX(-1) rotateZ(-90deg) translateY(-20px) scale(1.05); }
-  50% { transform: scaleX(-1) rotateZ(-90deg) translateY(0) scale(1); }
-  75% { transform: scaleX(-1) rotateZ(-90deg) translateY(-20px) scale(1.05); }
-  100% { transform: scaleX(-1) rotateZ(-90deg) translateY(0) scale(1); }
+  0% { transform: scaleX(-1) rotateZ(0deg) translateY(0) scale(1); }
+  25% { transform: scaleX(-1) rotateZ(0deg) translateY(-20px) scale(1.05); }
+  50% { transform: scaleX(-1) rotateZ(0deg) translateY(0) scale(1); }
+  75% { transform: scaleX(-1) rotateZ(0deg) translateY(-20px) scale(1.05); }
+  100% { transform: scaleX(-1) rotateZ(0deg) translateY(0) scale(1); }
 }
 
 @keyframes handWave {
-  0% { transform: scaleX(-1) rotateZ(-90deg); }
-  25% { transform: scaleX(-1) rotateZ(-75deg); }
-  50% { transform: scaleX(-1) rotateZ(-105deg); }
-  75% { transform: scaleX(-1) rotateZ(-75deg); }
-  100% { transform: scaleX(-1) rotateZ(-90deg); }
+  0% { transform: scaleX(-1) rotateZ(0deg); }
+  25% { transform: scaleX(-1) rotateZ(15deg); }
+  50% { transform: scaleX(-1) rotateZ(-15deg); }
+  75% { transform: scaleX(-1) rotateZ(15deg); }
+  100% { transform: scaleX(-1) rotateZ(0deg); }
 }
