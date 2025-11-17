@@ -33,7 +33,6 @@ const insuranceBtn = document.getElementById('insurance-btn');
 const chipButtons = document.querySelectorAll('.chip');
 const betBtn = document.getElementById('bet-btn');
 
-const leftHandEl = document.getElementById('left-hand');
 const rightHandEl = document.getElementById('right-hand');
 
 // -------------------- AUDIO --------------------
@@ -227,18 +226,11 @@ function showOverlay(id) {
 // -------------------- HAND ANIMATIONS --------------------
 function animateHand(action) {
   if (action === 'hit') {
-    leftHandEl.classList.add('tap');
-    setTimeout(() => leftHandEl.classList.remove('tap'), 600);
-  } else if (action === 'stand') {
+    rightHandEl.classList.add('tap');
+    setTimeout(() => rightHandEl.classList.remove('tap'), 600);
+  } else if (action === 'stand' || action === 'split') {
     rightHandEl.classList.add('wave');
     setTimeout(() => rightHandEl.classList.remove('wave'), 800);
-  } else if (action === 'split') {
-    leftHandEl.classList.add('wave');
-    rightHandEl.classList.add('wave');
-    setTimeout(() => {
-      leftHandEl.classList.remove('wave');
-      rightHandEl.classList.remove('wave');
-    }, 800);
   }
 }
 
@@ -326,17 +318,23 @@ insuranceBtn.addEventListener('click', () => {
 chipButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     const value = parseInt(btn.dataset.value);
+    const color = btn.dataset.color;
     if (bankroll >= value && !gameInProgress) {
-      // Track denomination
-      betChips.push(value);
-      animateTokens(value, btn, betEl, () => {
-        bankroll -= value;
-        bet += value;
-        handBets = [bet];
-        animateNumber(bankrollEl, bankroll);
-        animateNumber(betEl, bet);
-        updateControls();
-      });
+      // For $5 and $25 chips, spawn that many $1 tokens in their color
+      // For $100 chip, spawn 100 green tokens
+      let count = value;
+      for (let i = 0; i < count; i++) {
+        spawnToken(1, color, btn, betEl, () => {
+          if (i === count - 1) {
+            bankroll -= value;
+            bet += value;
+            handBets = [bet];
+            animateNumber(bankrollEl, bankroll);
+            animateNumber(betEl, bet);
+            updateControls();
+          }
+        });
+      }
     }
   });
 });
@@ -348,54 +346,46 @@ betBtn.addEventListener('click', () => {
 });
 
 // -------------------- TOKEN ANIMATION --------------------
-function animateTokens(chipValue, chipElement, targetElement, callback) {
+function spawnToken(amount, color, chipElement, targetElement, callback) {
   const chipRect = chipElement.getBoundingClientRect();
   const targetRect = targetElement.getBoundingClientRect();
-  let finished = 0;
 
-  // Animate tokens equal to denomination count (e.g. $25 chip spawns 5 tokens of $5)
-  const denom = chipValue === 5 ? 1 : chipValue === 25 ? 5 : 20; // crude mapping
-  const count = chipValue / denom;
+  const token = document.createElement('div');
+  token.className = 'token';
+  token.textContent = `$${amount}`;
+  token.style.background = color;
+  document.body.appendChild(token);
 
-  for (let i = 0; i < count; i++) {
-    const token = document.createElement('div');
-    token.className = 'token';
-    token.textContent = `$${denom}`;
-    token.style.background = chipElement.dataset.color || '#ffcc00';
-    document.body.appendChild(token);
+  token.style.position = 'fixed';
+  token.style.left = chipRect.left + 'px';
+  token.style.top = chipRect.top + 'px';
+  token.style.zIndex = 9999;
 
-    token.style.position = 'fixed';
-    token.style.left = chipRect.left + 'px';
-    token.style.top = chipRect.top + 'px';
-    token.style.zIndex = 9999;
+  const offsetX = (Math.random() - 0.5) * 200;
+  const offsetY = (Math.random() - 0.5) * 200;
 
-    const offsetX = (Math.random() - 0.5) * 200;
-    const offsetY = (Math.random() - 0.5) * 200;
+  token.animate(
+    [{ transform: `translate(0,0)` }, { transform: `translate(${offsetX}px, ${offsetY}px)` }],
+    { duration: 200, fill: 'forwards' }
+  );
 
-    token.animate(
-      [{ transform: `translate(0,0)` }, { transform: `translate(${offsetX}px, ${offsetY}px)` }],
-      { duration: 200, fill: 'forwards' }
-    );
+  setTimeout(() => {
+    const dx = targetRect.left - chipRect.left;
+    const dy = targetRect.top - chipRect.top;
 
-    setTimeout(() => {
-      const dx = targetRect.left - chipRect.left;
-      const dy = targetRect.top - chipRect.top;
-
-      token
-        .animate(
-          [
-            { transform: `translate(${offsetX}px, ${offsetY}px)` },
-            { transform: `translate(${dx}px, ${dy}px)` }
-          ],
-          { duration: 700, easing: 'ease-in-out', fill: 'forwards' }
-        )
-        .onfinish = () => {
-          token.remove();
-          finished++;
-          if (finished === count && callback) callback();
-        };
-    }, 200);
-  }
+    token
+      .animate(
+        [
+          { transform: `translate(${offsetX}px, ${offsetY}px)` },
+          { transform: `translate(${dx}px, ${dy}px)` }
+        ],
+        { duration: 700, easing: 'ease-in-out', fill: 'forwards' }
+      )
+      .onfinish = () => {
+        token.remove();
+        if (callback) callback();
+      };
+  }, 200);
 }
 
 // -------------------- DISPLAY & CONTROLS --------------------

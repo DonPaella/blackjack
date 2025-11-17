@@ -102,6 +102,7 @@ body {
   border-radius: 10px;
   animation: pulseYellow 2s infinite;
   transition: transform 0.2s;
+  cursor: pointer;
 }
 #bet-btn:hover {
   transform: scale(1.1);
@@ -120,40 +121,48 @@ body {
   margin: 10px 0;
 }
 
-#hit-btn, #stand-btn {
+#hit-btn {
   font-size: 1.6rem;
   padding: 1rem 2.5rem;
   margin: 0 20px;
-  background: #ffcc00;
+  background: #2ecc71; /* green */
   color: #000;
   border-radius: 8px;
-  animation: pulseYellow 2s infinite;
+  cursor: pointer;
+}
+
+#stand-btn {
+  font-size: 1.6rem;
+  padding: 1rem 2.5rem;
+  margin: 0 20px;
+  background: #e74c3c; /* red */
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#double-btn, #split-btn, #insurance-btn {
+  font-size: 1.2rem;
+  padding: 0.8rem 1.8rem;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 #double-btn {
-  font-size: 1.2rem;
-  padding: 0.8rem 1.8rem;
   background: #555;
   color: #fff;
-  border-radius: 6px;
   animation: pulseWhite 2s infinite;
 }
 
 #split-btn {
-  font-size: 1.2rem;
-  padding: 0.8rem 1.8rem;
   background: #e74c3c;
   color: #fff;
-  border-radius: 6px;
   animation: pulseRed 2s infinite;
 }
 
 #insurance-btn {
-  font-size: 1.2rem;
-  padding: 0.8rem 1.8rem;
   background: #3498db;
   color: #fff;
-  border-radius: 6px;
   animation: pulseBlue 2s infinite;
 }
 
@@ -170,7 +179,7 @@ body {
   display: inline-block;
   margin: 10px;
   font-family: monospace;
-  font-size: 64px;
+  font-size: 64px; /* bigger */
   white-space: pre;
   background: #fff;
   color: #000;
@@ -266,75 +275,44 @@ body {
   50% { box-shadow: 0 0 35px 15px rgba(255,255,255,1); }
 }
 
-/* ---------- CARTOON HANDS ---------- */
+/* ---------- RIGHT HAND EMOJI ---------- */
 .player-hand-visual {
   position: absolute;
-  bottom: 165px;
-  width: 94px;
-  height: 58px;
-  background: #f4c27a;
-  border: 3px solid #2b1c0e;
-  border-radius: 28px;
-  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+  bottom: 180px;
+  right: 12%;
+  width: 160px;
+  height: 160px;
   z-index: 1200;
   pointer-events: none;
-  transition: transform 0.25s ease;
+  text-align: center;
 }
 
-/* Positioning */
-#left-hand {
-  left: 14%;
-}
-#right-hand {
-  right: 14%;
+.player-hand-visual .hand-emoji {
+  font-size: 140px;
+  display: inline-block;
+  transform: rotateX(180deg) rotateZ(20deg);
 }
 
-/* Thumb: crude circle */
-.player-hand-visual .thumb {
-  position: absolute;
-  bottom: 6px;
-  left: -12px;
-  width: 22px;
-  height: 22px;
-  background: #f4c27a;
-  border: 3px solid #2b1c0e;
-  border-radius: 50%;
-}
-
-/* Fingers: simple rounded rectangles */
-.player-hand-visual .finger {
-  position: absolute;
-  bottom: 2px;
-  width: 18px;
-  height: 42px;
-  background: #f4c27a;
-  border: 3px solid #2b1c0e;
-  border-radius: 10px;
-}
-.player-hand-visual .finger.f1 { left: 14px; }
-.player-hand-visual .finger.f2 { left: 38px; }
-.player-hand-visual .finger.f3 { left: 62px; }
-
-/* Tap animation (for hit) */
+/* ---------- HAND ANIMATIONS ---------- */
 .player-hand-visual.tap {
   animation: handTap 0.6s ease;
 }
-@keyframes handTap {
-  0% { transform: translateY(0); }
-  25% { transform: translateY(-14px); }
-  50% { transform: translateY(0); }
-  75% { transform: translateY(-14px); }
-  100% { transform: translateY(0); }
-}
-
-/* Wave animation (for stand/split) */
 .player-hand-visual.wave {
   animation: handWave 0.8s ease;
 }
+
+@keyframes handTap {
+  0% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-20px) scale(1.05); }
+  50% { transform: translateY(0) scale(1); }
+  75% { transform: translateY(-20px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
+}
+
 @keyframes handWave {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(12deg); }
-  50% { transform: rotate(-12deg); }
-  75% { transform: rotate(12deg); }
-  100% { transform: rotate(0deg); }
+  0% { transform: rotateZ(20deg); }
+  25% { transform: rotateZ(35deg); }
+  50% { transform: rotateZ(5deg); }
+  75% { transform: rotateZ(35deg); }
+  100% { transform: rotateZ(20deg); }
 }
