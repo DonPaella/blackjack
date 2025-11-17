@@ -234,7 +234,7 @@ function animateHand(action) {
   }
 }
 
-// -------------------- CONTROLS --------------------
+// -------------------- BUTTON EVENTS --------------------
 hitBtn.addEventListener('click', () => {
   playerHands[currentHandIndex].push(drawCard());
   handActionTaken[currentHandIndex] = true;
@@ -258,60 +258,70 @@ standBtn.addEventListener('click', () => {
 });
 
 doubleBtn.addEventListener('click', () => {
-  if (
-    bankroll >= handBets[currentHandIndex] &&
-    playerHands[currentHandIndex].length === 2 &&
-    !handActionTaken[currentHandIndex]
-  ) {
-    bankroll -= handBets[currentHandIndex];
-    handBets[currentHandIndex] *= 2;
-    playerHands[currentHandIndex].push(drawCard());
-    handActionTaken[currentHandIndex] = true;
-    renderHands();
-    animateNumber(bankrollEl, bankroll);
-    animateHand('hit');
-    nextHandOrEnd();
-  }
-});
+  if (!canDouble(currentHandIndex)) return;
 
-splitBtn.addEventListener('click', () => {
-  const hand = playerHands[currentHandIndex];
   const wager = handBets[currentHandIndex];
-  if (
-    hand.length === 2 &&
-    hand[0].value === hand[1].value &&
-    bankroll >= wager
-  ) {
-    bankroll -= wager;
-    const left = [hand[0]];
-    const right = [hand[1]];
-    playerHands[currentHandIndex] = left;
-    playerHands.splice(currentHandIndex + 1, 0, right);
-    handBets.splice(currentHandIndex + 1, 0, wager);
-    handActionTaken.splice(currentHandIndex, 1, false);
-    handActionTaken.splice(currentHandIndex + 1, 0, false);
+  bankroll -= wager;
+  handBets[currentHandIndex] = wager * 2;
 
-    left.push(drawCard());
-    right.push(drawCard());
+  // One card, then hand ends
+  playerHands[currentHandIndex].push(drawCard());
+  handActionTaken[currentHandIndex] = true;
 
-    renderHands();
-    animateNumber(bankrollEl, bankroll);
-    animateHand('split');
-    updateControls();
+  renderHands();
+  animateNumber(bankrollEl, bankroll);
+  playSound('deal-sound');
+  animateHand('hit');
+
+  if (calculateScore(playerHands[currentHandIndex]) > 21) {
+    playSound('lose-sound');
+    showOverlay('lose-overlay');
   }
+
+  nextHandOrEnd();
 });
 
+// --- SPLIT (supports re-splitting pairs on any hand) ---
+splitBtn.addEventListener('click', () => {
+  if (!canSplit(currentHandIndex)) return;
+
+  const wager = handBets[currentHandIndex];
+  bankroll -= wager;
+
+  const original = playerHands[currentHandIndex];
+  const left = [original[0]];
+  const right = [original[1]];
+
+  // Replace current hand with left; insert right immediately after
+  playerHands[currentHandIndex] = left;
+  playerHands.splice(currentHandIndex + 1, 0, right);
+
+  // Duplicate bet for the new hand
+  handBets.splice(currentHandIndex + 1, 0, wager);
+
+  // Reset action flags for both split hands
+  handActionTaken[currentHandIndex] = false;
+  handActionTaken.splice(currentHandIndex + 1, 0, false);
+
+  // Deal one card to each split hand
+  left.push(drawCard());
+  right.push(drawCard());
+
+  renderHands();
+  animateNumber(bankrollEl, bankroll);
+  animateHand('split');
+  updateControls();
+});
+
+// --- INSURANCE ---
 insuranceBtn.addEventListener('click', () => {
-  if (
-    dealerHand[1]?.value === 'A' &&
-    insuranceBet === 0 &&
-    bankroll >= bet / 2
-  ) {
-    insuranceBet = bet / 2;
-    bankroll -= insuranceBet;
-    animateNumber(bankrollEl, bankroll);
-    updateControls();
-  }
+  if (!canInsure()) return;
+
+  insuranceBet = bet / 2;
+  bankroll -= insuranceBet;
+
+  animateNumber(bankrollEl, bankroll);
+  updateControls();
 });
 
 // -------------------- CHIPS --------------------
@@ -387,6 +397,36 @@ function spawnToken(amount, color, chipElement, targetElement, callback) {
 }
 
 // -------------------- DISPLAY & CONTROLS --------------------
+function canDouble(i) {
+  const hand = playerHands[i] || [];
+  return (
+    gameInProgress &&
+    hand.length === 2 &&
+    !handActionTaken[i] &&
+    bankroll >= handBets[i]
+  );
+}
+
+function canSplit(i) {
+  const hand = playerHands[i] || [];
+  return (
+    gameInProgress &&
+    hand.length === 2 &&
+    hand[0]?.value === hand[1]?.value &&
+    bankroll >= handBets[i]
+  );
+}
+
+function canInsure() {
+  return (
+    gameInProgress &&
+    dealerHand[1]?.value === 'A' &&
+    insuranceBet === 0 &&
+    bet > 0 &&
+    bankroll >= bet / 2
+  );
+}
+
 function updateDisplay() {
   bankrollEl.textContent = bankroll;
   betEl.textContent = bet;
@@ -398,48 +438,24 @@ function updateControls() {
   hitBtn.disabled = !inPlay;
   standBtn.disabled = !inPlay;
 
-  // --- DOUBLE DOWN ---
-  // Available only if: hand has exactly 2 cards, no action taken yet, bankroll >= current bet
-  if (
-    inPlay &&
-    playerHands[currentHandIndex]?.length === 2 &&
-    bankroll >= handBets[currentHandIndex] &&
-    !handActionTaken[currentHandIndex]
-  ) {
+  if (canDouble(currentHandIndex)) {
     doubleBtn.classList.remove('hidden');
   } else {
     doubleBtn.classList.add('hidden');
   }
 
-  // --- SPLIT ---
-  // Available if: hand has exactly 2 cards of the same value, bankroll >= current bet
-  // Works on any hand (including split hands)
-  const hand = playerHands[currentHandIndex] || [];
-  if (
-    inPlay &&
-    hand.length === 2 &&
-    hand[0]?.value === hand[1]?.value &&
-    bankroll >= handBets[currentHandIndex]
-  ) {
+  if (canSplit(currentHandIndex)) {
     splitBtn.classList.remove('hidden');
   } else {
     splitBtn.classList.add('hidden');
   }
 
-  // --- INSURANCE ---
-  // Available if: dealer’s visible card is Ace, insurance not already taken, bankroll >= half of bet
-  if (
-    inPlay &&
-    dealerHand[1]?.value === 'A' &&
-    insuranceBet === 0 &&
-    bankroll >= bet / 2
-  ) {
+  if (canInsure()) {
     insuranceBtn.classList.remove('hidden');
   } else {
     insuranceBtn.classList.add('hidden');
   }
 
-  // --- CHIP DIMMING ---
   chipButtons.forEach(btn => {
     const value = parseInt(btn.dataset.value, 10);
     if (bankroll < value || gameInProgress) {
@@ -449,7 +465,6 @@ function updateControls() {
     }
   });
 }
-
 
 // -------------------- UTIL --------------------
 function sleep(ms) {
