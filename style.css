@@ -85,7 +85,6 @@ body {
   transform: scale(1.1);
 }
 
-/* Dim chips when unaffordable */
 .chip.dim {
   opacity: 0.35;
   filter: grayscale(80%);
@@ -171,12 +170,12 @@ body {
   display: inline-block;
   margin: 10px;
   font-family: monospace;
-  font-size: 48px; /* bigger font */
+  font-size: 64px;
   white-space: pre;
   background: #fff;
   color: #000;
-  border-radius: 10px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 20px;
   box-shadow: 0 0 16px rgba(0,0,0,0.8);
 }
 .card.red { color: red; }
@@ -268,74 +267,74 @@ body {
 }
 
 /* ---------- CARTOON HANDS ---------- */
-.hand {
+.player-hand-visual {
   position: absolute;
-  bottom: 140px;
-  width: 80px;
-  height: 50px;
-  background: #f4c27a; /* simple skin tone */
-  border-radius: 25px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  bottom: 165px;
+  width: 94px;
+  height: 58px;
+  background: #f4c27a;
+  border: 3px solid #2b1c0e;
+  border-radius: 28px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+  z-index: 1200;
+  pointer-events: none;
+  transition: transform 0.25s ease;
 }
 
-/* Left and right hand positions */
+/* Positioning */
 #left-hand {
-  left: 20%;
+  left: 14%;
 }
 #right-hand {
-  right: 20%;
+  right: 14%;
 }
 
-/* Fingers crude cartoon style */
-.hand::before,
-.hand::after {
-  content: '';
+/* Thumb: crude circle */
+.player-hand-visual .thumb {
   position: absolute;
-  bottom: 0;
-  width: 16px;
-  height: 40px;
-  background: #f4c27a;
-  border-radius: 8px;
-}
-
-.hand::before {
-  left: 10px;
-}
-.hand::after {
-  right: 10px;
-}
-
-/* Thumb */
-.hand .thumb {
-  position: absolute;
-  bottom: 5px;
+  bottom: 6px;
   left: -12px;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   background: #f4c27a;
+  border: 3px solid #2b1c0e;
   border-radius: 50%;
 }
 
-/* Tap animation (for hit) */
-.hand.tap {
-  animation: tapAnim 0.6s ease;
+/* Fingers: simple rounded rectangles */
+.player-hand-visual .finger {
+  position: absolute;
+  bottom: 2px;
+  width: 18px;
+  height: 42px;
+  background: #f4c27a;
+  border: 3px solid #2b1c0e;
+  border-radius: 10px;
 }
-@keyframes tapAnim {
+.player-hand-visual .finger.f1 { left: 14px; }
+.player-hand-visual .finger.f2 { left: 38px; }
+.player-hand-visual .finger.f3 { left: 62px; }
+
+/* Tap animation (for hit) */
+.player-hand-visual.tap {
+  animation: handTap 0.6s ease;
+}
+@keyframes handTap {
   0% { transform: translateY(0); }
-  25% { transform: translateY(-15px); }
+  25% { transform: translateY(-14px); }
   50% { transform: translateY(0); }
-  75% { transform: translateY(-15px); }
+  75% { transform: translateY(-14px); }
   100% { transform: translateY(0); }
 }
 
 /* Wave animation (for stand/split) */
-.hand.wave {
-  animation: waveAnim 0.8s ease;
+.player-hand-visual.wave {
+  animation: handWave 0.8s ease;
 }
-@keyframes waveAnim {
+@keyframes handWave {
   0% { transform: rotate(0deg); }
-  25% { transform: rotate(15deg); }
-  50% { transform: rotate(-15deg); }
-  75% { transform: rotate(15deg); }
+  25% { transform: rotate(12deg); }
+  50% { transform: rotate(-12deg); }
+  75% { transform: rotate(12deg); }
   100% { transform: rotate(0deg); }
 }

@@ -5,12 +5,12 @@ let insuranceBet = 0;
 let deck = [];
 let dealerHand = [];
 let playerHands = [[]];
-let handBets = [0]; // track bet per hand
+let handBets = [0];
 let currentHandIndex = 0;
 let gameInProgress = false;
 let revealDealer = false;
-let handActionTaken = []; // track if hit/stand happened per hand
-let betChips = []; // track denominations used for current bet
+let handActionTaken = [];
+let betChips = [];
 
 // -------------------- DOM ELEMENTS --------------------
 const bankrollEl = document.getElementById('bankroll-amount');
@@ -124,8 +124,8 @@ function renderHands() {
 }
 
 function renderCard(card) {
-  const red = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
-  return `<div class="card ${red}">${card.value}${card.suit}</div>`;
+  const color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
+  return `<div class="card ${color}">${card.value}${card.suit}</div>`;
 }
 
 // -------------------- GAME FLOW --------------------
@@ -136,8 +136,8 @@ function startRound() {
   dealerHand = [];
   playerHands = [[]];
   handBets = [bet];
-  currentHandIndex = 0;
   handActionTaken = [false];
+  currentHandIndex = 0;
   messageEl.textContent = '';
 
   createDeck();
@@ -152,13 +152,11 @@ function startRound() {
 }
 
 async function endRound() {
-  // Only play dealer if at least one hand not busted
   const activeHands = playerHands.filter(h => calculateScore(h) <= 21);
   if (activeHands.length > 0) {
     revealDealer = true;
     renderHands();
     await sleep(800);
-
     while (calculateScore(dealerHand) < 17) {
       dealerHand.push(drawCard());
       renderHands();
@@ -202,14 +200,13 @@ async function endRound() {
   bet = 0;
   insuranceBet = 0;
   handBets = [0];
-  gameInProgress = false;
   betChips = [];
+  gameInProgress = false;
   animateNumber(bankrollEl, bankroll);
   animateNumber(betEl, bet);
   updateControls();
 }
 
-// -------------------- HAND FLOW --------------------
 function nextHandOrEnd() {
   if (currentHandIndex < playerHands.length - 1) {
     currentHandIndex++;
@@ -232,12 +229,10 @@ function animateHand(action) {
   if (action === 'hit') {
     leftHandEl.classList.add('tap');
     setTimeout(() => leftHandEl.classList.remove('tap'), 600);
-  }
-  if (action === 'stand') {
+  } else if (action === 'stand') {
     rightHandEl.classList.add('wave');
     setTimeout(() => rightHandEl.classList.remove('wave'), 800);
-  }
-  if (action === 'split') {
+  } else if (action === 'split') {
     leftHandEl.classList.add('wave');
     rightHandEl.classList.add('wave');
     setTimeout(() => {
@@ -250,13 +245,12 @@ function animateHand(action) {
 // -------------------- CONTROLS --------------------
 hitBtn.addEventListener('click', () => {
   playerHands[currentHandIndex].push(drawCard());
-  handActionTaken[currentHandIndex] = true; // mark that action taken
+  handActionTaken[currentHandIndex] = true;
   renderHands();
   playSound('deal-sound');
   animateHand('hit');
 
   if (calculateScore(playerHands[currentHandIndex]) > 21) {
-    // immediate bust: lose this hand without dealer play
     playSound('lose-sound');
     showOverlay('lose-overlay');
     nextHandOrEnd();
@@ -297,7 +291,6 @@ splitBtn.addEventListener('click', () => {
     bankroll >= wager
   ) {
     bankroll -= wager;
-    // split into two hands
     const left = [hand[0]];
     const right = [hand[1]];
     playerHands[currentHandIndex] = left;
@@ -334,10 +327,8 @@ chipButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     const value = parseInt(btn.dataset.value);
     if (bankroll >= value && !gameInProgress) {
-      // track denominations
-      for (let i = 0; i < value / value; i++) {
-        betChips.push(value);
-      }
+      // Track denomination
+      betChips.push(value);
       animateTokens(value, btn, betEl, () => {
         bankroll -= value;
         bet += value;
@@ -362,12 +353,15 @@ function animateTokens(chipValue, chipElement, targetElement, callback) {
   const targetRect = targetElement.getBoundingClientRect();
   let finished = 0;
 
-  // animate tokens equal to chip denomination count
-  for (let i = 0; i < chipValue / 5; i++) { // example: $25 chip spawns 5 tokens
+  // Animate tokens equal to denomination count (e.g. $25 chip spawns 5 tokens of $5)
+  const denom = chipValue === 5 ? 1 : chipValue === 25 ? 5 : 20; // crude mapping
+  const count = chipValue / denom;
+
+  for (let i = 0; i < count; i++) {
     const token = document.createElement('div');
     token.className = 'token';
-    token.textContent = `$${chipValue}`;
-    token.style.background = chipElement.style.background;
+    token.textContent = `$${denom}`;
+    token.style.background = chipElement.dataset.color || '#ffcc00';
     document.body.appendChild(token);
 
     token.style.position = 'fixed';
@@ -398,7 +392,7 @@ function animateTokens(chipValue, chipElement, targetElement, callback) {
         .onfinish = () => {
           token.remove();
           finished++;
-          if (finished === chipValue / 5 && callback) callback();
+          if (finished === count && callback) callback();
         };
     }, 200);
   }
@@ -472,7 +466,7 @@ function sleep(ms) {
 function animateNumber(element, newValue) {
   const start = parseInt(element.textContent || '0', 10);
   const end = newValue;
-  const duration = 500; // ms
+  const duration = 500;
   const startTime = performance.now();
 
   function step(currentTime) {
