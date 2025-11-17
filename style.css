@@ -4,13 +4,13 @@
 body {
   margin: 0;
   font-family: 'Montserrat', sans-serif;
-  /* Enhanced: Richer, deep green velvet look */
-  background: radial-gradient(circle at center, #016e3c 0%, #004d28 40%, #003b1e 100%);
+  /* Updated: Casino Red Velvet background */
+  background: radial-gradient(circle at center, #8a0303 0%, #5e0202 40%, #470101 100%);
   color: #fff;
   overflow-x: hidden;
 }
 
-/* Add a subtle felt texture for extra flair */
+/* Add a subtle felt texture for extra flair (optional, requires felt-texture.png) */
 body::before {
     content: '';
     position: fixed;
@@ -18,7 +18,6 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    /* You would need a subtle felt image for this, or just rely on the gradient */
     /* background-image: url('felt-texture.png'); */
     opacity: 0.1;
     pointer-events: none;
@@ -37,7 +36,7 @@ body::before {
   left: 20px;
   font-size: 2rem;
   font-weight: 900;
-  text-shadow: 0 0 10px #2ecc71, 0 0 20px #2ecc71;
+  text-shadow: 0 0 10px #ffcc00, 0 0 20px #ffcc00; /* Yellow shadow for contrast */
 }
 
 #bet-display {
@@ -46,7 +45,7 @@ body::before {
   right: 20px;
   font-size: 2rem;
   font-weight: 900;
-  text-shadow: 0 0 10px #e74c3c, 0 0 20px #e74c3c;
+  text-shadow: 0 0 10px #fff, 0 0 20px #fff; /* White shadow for contrast */
 }
 
 #dealer-hand {
@@ -78,10 +77,10 @@ body::before {
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s; /* Add box-shadow transition */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.5); /* Add initial shadow */
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
 }
-
+/* Multicolored chips remain the same as requested */
 .chip.red {
   background: #e74c3c;
   color: #fff;
@@ -108,10 +107,9 @@ body::before {
   filter: grayscale(80%);
   animation: none;
   cursor: not-allowed;
-  transform: scale(1); /* Ensure dim chips don't scale on hover */
+  transform: scale(1);
   box-shadow: 0 4px 8px rgba(0,0,0,0.5);
 }
-/* Ensure disabled state is visually clear */
 .chip:disabled {
     cursor: not-allowed;
     opacity: 0.5;
@@ -123,10 +121,10 @@ body::before {
   font-size: 1.6rem;
   padding: 1.2rem 2.5rem;
   margin-left: 20px;
-  background: #ffcc00;
+  background: #fff; /* Updated: White button */
   color: #000;
   border-radius: 10px;
-  animation: pulseYellow 2s infinite;
+  /* animation: pulseWhite 2s infinite; */ /* Optional white pulse */
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
   border: none;
@@ -156,7 +154,6 @@ body::before {
   margin: 10px 0;
 }
 
-/* Base style for all controls buttons to ensure consistent disabled styling */
 #controls button {
     border: none;
     transition: transform 0.2s, background 0.2s, opacity 0.2s;
@@ -166,23 +163,21 @@ body::before {
 #hit-btn {
   font-size: 2rem;
   padding: 1.4rem 3rem;
-  margin: 0 20px;
-  background: #2ecc71; /* green */
-  color: #000;
+  background: #000; /* Updated: Black button */
+  color: #fff;
   border-radius: 10px;
   cursor: pointer;
-  animation: pulseGreen 2s infinite;
+  /* animation: pulseWhite 2s infinite; */ /* Optional white pulse */
 }
 
 #stand-btn {
   font-size: 2rem;
   padding: 1.4rem 3rem;
-  margin: 0 20px;
-  background: #e74c3c; /* red */
-  color: #fff;
+  background: #fff; /* Updated: White button */
+  color: #000;
   border-radius: 10px;
   cursor: pointer;
-  animation: pulseRed 2s infinite;
+  /* animation: pulseRed 2s infinite; */
 }
 
 #double-btn, #split-btn, #insurance-btn {
@@ -194,21 +189,21 @@ body::before {
 }
 
 #double-btn {
-  background: #555;
+  background: #000; /* Updated: Black button */
   color: #fff;
-  animation: pulseWhite 2s infinite;
+  /* animation: pulseWhite 2s infinite; */
 }
 
 #split-btn {
-  background: #e74c3c;
-  color: #fff;
-  animation: pulseRed 2s infinite;
+  background: #fff; /* Updated: White button */
+  color: #000;
+  /* animation: pulseRed 2s infinite; */
 }
 
 #insurance-btn {
-  background: #3498db;
+  background: #000; /* Updated: Black button */
   color: #fff;
-  animation: pulseBlue 2s infinite;
+  /* animation: pulseBlue 2s infinite; */
 }
 
 #controls button:hover {
@@ -216,7 +211,6 @@ body::before {
   box-shadow: 0 6px 12px rgba(0,0,0,0.7);
 }
 
-/* Style for disabled buttons so they stop animating and aren't clickable */
 #controls button:disabled {
     cursor: not-allowed;
     opacity: 0.4;
@@ -230,7 +224,7 @@ body::before {
   display: inline-block;
   margin: 10px;
   font-family: monospace;
-  font-size: 64px; /* bigger */
+  font-size: 64px;
   white-space: pre;
   background: #fff;
   color: #000;
@@ -244,18 +238,18 @@ body::before {
 /* ---------- TOKENS ---------- */
 .token {
   position: absolute;
-  width: 28px;
-  height: 28px;
+  /* Updated: Made tokens larger to match request */
+  width: 60px;
+  height: 60px;
+  line-height: 60px;
+  font-size: 20px;
   border-radius: 50%;
-  border: 2px solid black;
-  font-size: 14px;
-  text-align: center;
-  line-height: 28px;
+  border: 4px solid black; /* Increased border size */
   color: #fff;
   pointer-events: none;
   z-index: 1000;
   font-weight: bold;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5); /* Enhanced shadow */
 }
 .token.red { background: #e74c3c; }
 .token.blue { background: #3498db; }
@@ -275,16 +269,13 @@ body::before {
   justify-content: center;
   align-items: center;
   z-index: 2000;
-  pointer-events: none; /* Ensure clicks pass through overlays */
+  pointer-events: none; 
 }
 
 .overlay.active {
   display: flex;
   animation: fadeOut 2s forwards;
-}
-/* Ensure pointer events are active only during animation */
-.overlay.active {
-    pointer-events: all;
+  pointer-events: all;
 }
 
 
@@ -311,6 +302,7 @@ body::before {
 }
 
 /* ---------- PULSE ANIMATIONS ---------- */
+/* Using original animations as provided */
 @keyframes pulseYellow {
   0%, 100% { box-shadow: 0 0 15px 5px rgba(255, 204, 0, 0.6); }
   50% { box-shadow: 0 0 35px 15px rgba(255, 204, 0, 1); }
