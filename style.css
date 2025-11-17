@@ -122,30 +122,33 @@ body {
 }
 
 #hit-btn {
-  font-size: 1.6rem;
-  padding: 1rem 2.5rem;
+  font-size: 2rem;
+  padding: 1.4rem 3rem;
   margin: 0 20px;
   background: #2ecc71; /* green */
   color: #000;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
+  animation: pulseGreen 2s infinite;
 }
 
 #stand-btn {
-  font-size: 1.6rem;
-  padding: 1rem 2.5rem;
+  font-size: 2rem;
+  padding: 1.4rem 3rem;
   margin: 0 20px;
   background: #e74c3c; /* red */
   color: #fff;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
+  animation: pulseRed 2s infinite;
 }
 
 #double-btn, #split-btn, #insurance-btn {
-  font-size: 1.2rem;
-  padding: 0.8rem 1.8rem;
-  border-radius: 6px;
+  font-size: 1.4rem;
+  padding: 1rem 2rem;
+  border-radius: 8px;
   cursor: pointer;
+  margin: 0 10px;
 }
 
 #double-btn {
@@ -168,10 +171,6 @@ body {
 
 #controls button:hover {
   transform: scale(1.05);
-}
-
-.hidden {
-  display: none !important;
 }
 
 /* ---------- CARDS ---------- */
@@ -290,7 +289,7 @@ body {
 .player-hand-visual .hand-emoji {
   font-size: 140px;
   display: inline-block;
-  transform: rotateX(180deg) rotateZ(20deg);
+  transform: scaleX(-1) rotateZ(-90deg); /* flip horizontally, thumb left, face up */
 }
 
 /* ---------- HAND ANIMATIONS ---------- */
@@ -302,17 +301,17 @@ body {
 }
 
 @keyframes handTap {
-  0% { transform: translateY(0) scale(1); }
-  25% { transform: translateY(-20px) scale(1.05); }
-  50% { transform: translateY(0) scale(1); }
-  75% { transform: translateY(-20px) scale(1.05); }
-  100% { transform: translateY(0) scale(1); }
+  0% { transform: scaleX(-1) rotateZ(-90deg) translateY(0) scale(1); }
+  25% { transform: scaleX(-1) rotateZ(-90deg) translateY(-20px) scale(1.05); }
+  50% { transform: scaleX(-1) rotateZ(-90deg) translateY(0) scale(1); }
+  75% { transform: scaleX(-1) rotateZ(-90deg) translateY(-20px) scale(1.05); }
+  100% { transform: scaleX(-1) rotateZ(-90deg) translateY(0) scale(1); }
 }
 
 @keyframes handWave {
-  0% { transform: rotateZ(20deg); }
-  25% { transform: rotateZ(35deg); }
-  50% { transform: rotateZ(5deg); }
-  75% { transform: rotateZ(35deg); }
-  100% { transform: rotateZ(20deg); }
+  0% { transform: scaleX(-1) rotateZ(-90deg); }
+  25% { transform: scaleX(-1) rotateZ(-75deg); }
+  50% { transform: scaleX(-1) rotateZ(-105deg); }
+  75% { transform: scaleX(-1) rotateZ(-75deg); }
+  100% { transform: scaleX(-1) rotateZ(-90deg); }
 }

@@ -320,8 +320,6 @@ chipButtons.forEach(btn => {
     const value = parseInt(btn.dataset.value);
     const color = btn.dataset.color;
     if (bankroll >= value && !gameInProgress) {
-      // For $5 and $25 chips, spawn that many $1 tokens in their color
-      // For $100 chip, spawn 100 green tokens
       let count = value;
       for (let i = 0; i < count; i++) {
         spawnToken(1, color, btn, betEl, () => {
@@ -400,7 +398,6 @@ function updateControls() {
   hitBtn.disabled = !inPlay;
   standBtn.disabled = !inPlay;
 
-  // Double available only on first two cards, sufficient bankroll, no prior action
   if (
     inPlay &&
     playerHands[currentHandIndex]?.length === 2 &&
@@ -412,7 +409,6 @@ function updateControls() {
     doubleBtn.classList.add('hidden');
   }
 
-  // Split available: exactly two cards of same value, sufficient bankroll
   const hand = playerHands[currentHandIndex] || [];
   if (
     inPlay &&
@@ -425,7 +421,6 @@ function updateControls() {
     splitBtn.classList.add('hidden');
   }
 
-  // Insurance available only if dealer up-card is Ace and you can afford it
   if (
     inPlay &&
     dealerHand[1]?.value === 'A' &&
@@ -437,7 +432,6 @@ function updateControls() {
     insuranceBtn.classList.add('hidden');
   }
 
-  // Dim chips if unaffordable
   chipButtons.forEach(btn => {
     const value = parseInt(btn.dataset.value, 10);
     if (bankroll < value || gameInProgress) {
